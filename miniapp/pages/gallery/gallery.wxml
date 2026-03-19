@@ -43,7 +43,8 @@
         <image src="{{item.thumbnail_url || item.url}}" mode="aspectFill"
                class="cell-img"
                data-url="{{item.url}}"
-               bindtap="previewPhoto"/>
+               bindtap="previewPhoto"
+               lazy-load="true"/>
         <view class="cell-overlay">
           <view class="cell-user">
             <image class="cell-avatar" src="{{item.avatar_url}}" mode="aspectFill"/>

@@ -31,14 +31,20 @@ Page({
       ]);
 
       this.setData({
-        photos: galleryRes.data.photos,
-        winners: galleryRes.data.winners,
-        stats: galleryRes.data.stats,
+        photos: galleryRes.data.photos || [],
+        winners: galleryRes.data.winners || [],
+        stats: galleryRes.data.stats || {},
         activity: activityRes.data.activity,
         loading: false
       });
     } catch (e) {
-      this.setData({ loading: false });
+      console.error('Gallery load error:', e);
+      this.setData({ 
+        photos: [], 
+        winners: [], 
+        stats: {}, 
+        loading: false 
+      });
       showToast('加载失败');
     }
   },
@@ -66,7 +72,10 @@ Page({
           : p
       );
       this.setData({ photos });
-      if (!isLiked) wx.vibrateShort({ type: 'light' });
+      // Android compatible vibration
+      if (!isLiked && wx.vibrateShort) {
+        wx.vibrateShort({ type: 'light', fail: () => {} });
+      }
     } catch (e) {
       showToast('操作失败');
     }

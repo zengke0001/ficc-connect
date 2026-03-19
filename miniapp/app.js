@@ -6,7 +6,7 @@ App({
     token: null,
     // TODO: Replace with your deployed backend URL before release
     // For local dev use your machine's LAN IP e.g. http://192.168.1.x:3001
-    baseUrl: 'http://localhost:3001'
+    baseUrl: 'http://192.168.3.62:3001'
   },
 
   onLaunch() {
