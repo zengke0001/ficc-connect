@@ -1,0 +1,64 @@
+<!-- pages/activity/activity.wxml -->
+<view class="container">
+
+  <!-- Tab switcher -->
+  <view class="tabs">
+    <view class="tab {{tab === 'active' ? 'active' : ''}}" bindtap="switchTab" data-tab="active">
+      <text>进行中</text>
+    </view>
+    <view class="tab {{tab === 'archived' ? 'active' : ''}}" bindtap="switchTab" data-tab="archived">
+      <text>已归档</text>
+    </view>
+    <view class="tab-indicator" style="transform: translateX({{tab === 'archived' ? '100%' : '0'}})"></view>
+  </view>
+
+  <!-- List -->
+  <scroll-view class="activity-list" scroll-y
+               bindscrolltolower="onReachBottom">
+
+    <block wx:if="{{loading}}">
+      <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-activity"></view>
+    </block>
+
+    <block wx:elif="{{activities.length > 0}}">
+      <view wx:for="{{activities}}" wx:key="id"
+            class="activity-card card fade-in"
+            bindtap="goToDetail" data-id="{{item.id}}">
+        <image class="card-cover" src="{{item.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+        <view class="card-content">
+          <view class="card-header">
+            <view class="card-title">{{item.title}}</view>
+            <view class="days-left tag {{tab === 'archived' ? 'tag-purple' : 'tag-green'}}">
+              {{tab === 'archived' ? '已结束' : item.daysLeft}}
+            </view>
+          </view>
+          <view class="card-desc">{{item.description}}</view>
+          <view class="card-footer">
+            <image class="creator-avatar avatar avatar-sm" src="{{item.creator_avatar}}" mode="aspectFill"/>
+            <view class="creator-name">{{item.creator_name}}</view>
+            <view class="spacer"></view>
+            <view class="participant-count">
+              👥 {{item.participant_count || 0}} 人参与
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <view wx:else class="empty-state">
+      <text class="icon">{{tab === 'archived' ? '📂' : '🎯'}}</text>
+      <text class="text">{{tab === 'archived' ? '暂无归档活动' : '暂无进行中的活动'}}</text>
+    </view>
+
+    <view class="bottom-hint" wx:if="{{!hasMore && activities.length > 0}}">
+      <text>已加载全部活动</text>
+    </view>
+
+  </scroll-view>
+
+  <!-- FAB: Create activity -->
+  <view class="fab" bindtap="goToCreate">
+    <text class="fab-icon">＋</text>
+  </view>
+
+</view>

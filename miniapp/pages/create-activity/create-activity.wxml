@@ -1,0 +1,83 @@
+<!-- pages/create-activity/create-activity.wxml -->
+<scroll-view class="page-scroll" scroll-y>
+  <view class="form-page">
+
+    <!-- Cover Picker -->
+    <view class="cover-section" bindtap="chooseCover">
+      <image wx:if="{{coverPath}}" src="{{coverPath}}" mode="aspectFill" class="cover-preview"/>
+      <view wx:else class="cover-placeholder">
+        <text class="cover-icon">🖼️</text>
+        <text class="cover-text">点击上传封面图</text>
+      </view>
+    </view>
+
+    <!-- Title -->
+    <view class="form-section card card-body">
+      <view class="form-label">活动名称 <text class="required">*</text></view>
+      <input class="form-input" placeholder="例如：30天早起挑战" maxlength="50"
+             data-field="title" bindinput="onInput" value="{{form.title}}"/>
+    </view>
+
+    <!-- Description -->
+    <view class="form-section card card-body">
+      <view class="form-label">活动描述 <text class="required">*</text></view>
+      <textarea class="form-textarea" placeholder="活动规则和目标..." maxlength="500"
+                auto-height data-field="description"
+                bindinput="onInput" value="{{form.description}}"/>
+    </view>
+
+    <!-- Dates -->
+    <view class="form-section card card-body">
+      <view class="form-label">活动时间 <text class="required">*</text></view>
+      <view class="date-row">
+        <view class="date-field">
+          <view class="date-label">开始日期</view>
+          <picker mode="date" value="{{form.start_date}}" start="{{minDate}}"
+                  data-field="start_date" bindchange="onInput">
+            <view class="date-value">{{form.start_date || '选择日期'}}</view>
+          </picker>
+        </view>
+        <view class="date-separator">—</view>
+        <view class="date-field">
+          <view class="date-label">结束日期</view>
+          <picker mode="date" value="{{form.end_date}}" start="{{form.start_date || minDate}}"
+                  data-field="end_date" bindchange="onInput">
+            <view class="date-value">{{form.end_date || '选择日期'}}</view>
+          </picker>
+        </view>
+      </view>
+    </view>
+
+    <!-- Points -->
+    <view class="form-section card card-body">
+      <view class="form-label">积分设置</view>
+      <view class="points-row">
+        <view class="points-item">
+          <view class="points-label">每次打卡</view>
+          <view class="points-input-wrap">
+            <input class="points-input" type="number" value="{{form.points_per_checkin}}"
+                   data-field="points_per_checkin" bindinput="onInput"/>
+            <text class="points-unit">分</text>
+          </view>
+        </view>
+        <view class="points-item">
+          <view class="points-label">附图额外</view>
+          <view class="points-input-wrap">
+            <input class="points-input" type="number" value="{{form.points_per_photo}}"
+                   data-field="points_per_photo" bindinput="onInput"/>
+            <text class="points-unit">分</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Submit -->
+    <view class="submit-area safe-bottom">
+      <button class="btn btn-primary btn-block"
+              loading="{{submitting}}" bindtap="submit">
+        🚀 发布活动
+      </button>
+    </view>
+
+  </view>
+</scroll-view>

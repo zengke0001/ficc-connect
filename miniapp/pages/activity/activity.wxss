@@ -1,0 +1,68 @@
+/* pages/activity/activity.wxss */
+.container { background: var(--bg-secondary); min-height: 100vh; position: relative; }
+
+.tabs {
+  position: relative;
+  display: flex;
+  background: white;
+  padding: 0 40rpx;
+  border-bottom: 2rpx solid #F1F5F9;
+}
+.tab {
+  flex: 1; text-align: center;
+  padding: 28rpx 0;
+  font-size: 28rpx; color: #94A3B8;
+  font-weight: 500; position: relative; z-index: 1;
+  transition: color 0.2s;
+}
+.tab.active { color: #2563EB; font-weight: 700; }
+.tab-indicator {
+  position: absolute; bottom: 0; left: 0;
+  width: 50%; height: 4rpx;
+  background: #2563EB; border-radius: 4rpx;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.activity-list { height: calc(100vh - 180rpx); }
+
+.activity-card { margin: 24rpx 24rpx 0; overflow: hidden; }
+.card-cover { width: 100%; height: 240rpx; display: block; background: #F1F5F9; }
+.card-content { padding: 28rpx; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16rpx; margin-bottom: 12rpx; }
+.card-title { font-size: 32rpx; font-weight: 700; color: #1E293B; flex: 1; }
+.days-left { flex-shrink: 0; }
+.card-desc {
+  font-size: 26rpx; color: #64748B; line-height: 1.5;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  margin-bottom: 20rpx;
+}
+.card-footer { display: flex; align-items: center; gap: 12rpx; }
+.creator-avatar { flex-shrink: 0; }
+.creator-name { font-size: 24rpx; color: #64748B; }
+.spacer { flex: 1; }
+.participant-count { font-size: 24rpx; color: #94A3B8; }
+
+.skeleton-activity {
+  height: 400rpx; border-radius: 24rpx; margin: 24rpx 24rpx 0;
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.bottom-hint { text-align: center; padding: 32rpx; font-size: 24rpx; color: #CBD5E1; }
+
+/* FAB */
+.fab {
+  position: fixed; right: 48rpx; bottom: calc(120rpx + env(safe-area-inset-bottom));
+  width: 100rpx; height: 100rpx;
+  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8rpx 24rpx rgba(37, 99, 235, 0.45);
+  z-index: 10;
+}
+.fab-icon { font-size: 48rpx; color: white; line-height: 1; font-weight: 300; }

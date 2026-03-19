@@ -1,0 +1,29 @@
+# Backend specific ignores
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+winston/
+
+# Database (if using local files)
+*.db
+*.sqlite
+
+# Uploads (local development)
+uploads/
+tmp/
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.iml

@@ -1,0 +1,123 @@
+<!-- pages/activity-detail/activity-detail.wxml -->
+<scroll-view class="page-scroll" scroll-y>
+  <view wx:if="{{loading}}" class="loading-state">
+    <view class="skeleton-header"></view>
+  </view>
+
+  <block wx:elif="{{activity}}">
+
+    <!-- Cover image -->
+    <view class="cover-wrap">
+      <image class="cover-img" src="{{activity.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+      <view class="cover-overlay">
+        <view class="cover-title">{{activity.title}}</view>
+        <view class="cover-meta">
+          📅 {{activity.start_date}} ~ {{activity.end_date}}
+          · 👥 {{activity.participant_count}}人参与
+        </view>
+        <view class="cover-status tag {{activity.status === 'active' ? 'tag-green' : 'tag-purple'}}">
+          {{activity.status === 'active' ? '进行中' : '已结束'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- My progress (if joined) -->
+    <view class="my-progress card card-body" wx:if="{{isJoined && userParticipant}}">
+      <view class="progress-title">我的进度</view>
+      <view class="progress-stats">
+        <view class="p-stat">
+          <view class="p-val">{{userParticipant.total_checkins}}</view>
+          <view class="p-label">打卡次数</view>
+        </view>
+        <view class="p-stat">
+          <view class="p-val gradient-orange-text">{{userParticipant.current_streak}}🔥</view>
+          <view class="p-label">当前连击</view>
+        </view>
+        <view class="p-stat">
+          <view class="p-val gradient-purple-text">{{userParticipant.total_points}}</view>
+          <view class="p-label">总积分</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Description -->
+    <view class="section card card-body">
+      <view class="section-title">活动简介</view>
+      <view class="desc-text">{{activity.description}}</view>
+      <view class="rule-row">
+        <text class="rule-item">打卡得 {{activity.points_per_checkin}} 积分</text>
+        <text class="rule-item">附图额外得 {{activity.points_per_photo}} 积分</text>
+      </view>
+    </view>
+
+    <!-- Leaderboard -->
+    <view class="section card card-body">
+      <view class="lb-header">
+        <view class="section-title">排行榜</view>
+        <view class="lb-tabs">
+          <view class="lb-tab {{leaderboardType === 'daily' ? 'active' : ''}}"
+                bindtap="switchLeaderboard" data-type="daily">今日</view>
+          <view class="lb-tab {{leaderboardType === 'weekly' ? 'active' : ''}}"
+                bindtap="switchLeaderboard" data-type="weekly">本周</view>
+          <view class="lb-tab {{leaderboardType === 'overall' ? 'active' : ''}}"
+                bindtap="switchLeaderboard" data-type="overall">总榜</view>
+        </view>
+      </view>
+
+      <view wx:for="{{leaderboard}}" wx:key="id" class="rank-row {{index < 3 ? 'top-three' : ''}}">
+        <view class="rank-medal">{{item.medal}}</view>
+        <image class="avatar avatar-sm" src="{{item.avatar_url}}" mode="aspectFill"/>
+        <view class="rank-info">
+          <view class="rank-name">{{item.nickname}}</view>
+          <view class="rank-team tag-text" style="color: {{item.team_color}}">{{item.team_name}}</view>
+        </view>
+        <view class="rank-right">
+          <view class="rank-points">{{item.points}} 分</view>
+          <view class="rank-streak" wx:if="{{item.current_streak > 0}}">🔥{{item.current_streak}}</view>
+        </view>
+      </view>
+
+      <view class="see-more" bindtap="goToLeaderboard">查看完整排名 ›</view>
+    </view>
+
+    <!-- Recent photos -->
+    <view class="section card card-body" wx:if="{{recentPhotos.length > 0}}">
+      <view class="section-header-row">
+        <view class="section-title">最新打卡照片</view>
+        <view class="see-more-link" bindtap="goToGallery">查看全部 ›</view>
+      </view>
+      <view class="photo-grid">
+        <view wx:for="{{recentPhotos}}" wx:key="id" class="photo-item">
+          <image src="{{item.thumbnail_url || item.url}}" mode="aspectFill" class="photo-img"/>
+          <view class="photo-like" catchtap="likePhoto"
+                data-photo-id="{{item.id}}"
+                data-is-liked="{{item.is_liked}}">
+            <text>{{item.is_liked ? '❤️' : '🤍'}}</text>
+            <text class="like-count">{{item.likes_count}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view style="height: 200rpx;"></view>
+
+  </block>
+
+  <!-- Bottom action bar -->
+  <view class="action-bar safe-bottom" wx:if="{{activity}}">
+    <view wx:if="{{!isJoined && activity.status === 'active'}}"
+          class="btn btn-primary btn-block"
+          bindtap="joinActivity">
+      加入活动 🚀
+    </view>
+    <view wx:elif="{{isJoined && activity.status === 'active'}}"
+          class="checkin-action-btn"
+          bindtap="goToCheckin">
+      🔥 立即打卡
+    </view>
+    <view wx:else class="btn btn-secondary btn-block" bindtap="goToGallery">
+      查看活动相册 📸
+    </view>
+  </view>
+
+</scroll-view>

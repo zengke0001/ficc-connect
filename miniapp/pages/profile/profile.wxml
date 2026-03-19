@@ -1,0 +1,68 @@
+<!-- pages/profile/profile.wxml -->
+<scroll-view class="page-scroll" scroll-y>
+
+  <!-- Header gradient -->
+  <view class="profile-header gradient-blue">
+    <view class="avatar-wrap" bindtap="updateAvatar">
+      <image class="avatar avatar-xl" src="{{user.avatar_url || '/images/default-avatar.png'}}" mode="aspectFill"/>
+      <view class="avatar-edit">📷</view>
+    </view>
+    <view class="user-name">{{user.nickname}}</view>
+    <view class="user-team tag tag-white" wx:if="{{user.team_name}}">
+      <view class="team-dot-sm" style="background: {{user.team_color}};"></view>
+      {{user.team_name}}
+    </view>
+    <view class="user-points points-badge">⭐ {{user.total_points}} 积分</view>
+  </view>
+
+  <!-- Stats row -->
+  <view class="stats-row card">
+    <view class="stat-block">
+      <view class="sb-val">{{stats.activities_joined || 0}}</view>
+      <view class="sb-label">参与活动</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-block">
+      <view class="sb-val">{{stats.total_checkins || 0}}</view>
+      <view class="sb-label">累计打卡</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-block">
+      <view class="sb-val streak-val">{{stats.max_streak || 0}}🔥</view>
+      <view class="sb-label">最长连击</view>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-block">
+      <view class="sb-val ach-val">{{stats.achievements_earned || 0}}</view>
+      <view class="sb-label">获得成就</view>
+    </view>
+  </view>
+
+  <!-- Achievements -->
+  <view class="section card card-body" wx:if="{{achievements.length > 0}}">
+    <view class="section-title">我的成就</view>
+    <view class="achievement-grid">
+      <view wx:for="{{achievements}}" wx:key="id" class="ach-item pop-in">
+        <view class="ach-icon">{{item.icon_url || '🏅'}}</view>
+        <view class="ach-name">{{item.name}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Settings list -->
+  <view class="settings-section card">
+    <view class="settings-item" bindtap="goToArchived">
+      <text class="settings-icon">📂</text>
+      <text class="settings-label">已归档活动</text>
+      <text class="settings-arrow">›</text>
+    </view>
+    <view class="settings-divider"></view>
+    <view class="settings-item" bindtap="logout">
+      <text class="settings-icon">🚪</text>
+      <text class="settings-label settings-danger">退出登录</text>
+      <text class="settings-arrow">›</text>
+    </view>
+  </view>
+
+  <view style="height: 60rpx;"></view>
+</scroll-view>

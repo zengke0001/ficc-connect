@@ -1,0 +1,47 @@
+/* pages/create-activity/create-activity.wxss */
+.form-page { background: var(--bg-secondary); min-height: 100vh; padding-bottom: 40rpx; }
+
+.cover-section {
+  height: 320rpx; background: #F1F5F9;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.cover-preview { width: 100%; height: 100%; }
+.cover-placeholder { display: flex; flex-direction: column; align-items: center; gap: 16rpx; }
+.cover-icon { font-size: 72rpx; }
+.cover-text { font-size: 28rpx; color: #94A3B8; }
+
+.form-section { margin: 20rpx 24rpx 0; }
+.form-label { font-size: 26rpx; font-weight: 600; color: #64748B; margin-bottom: 16rpx; }
+.required { color: #EF4444; }
+
+.form-input {
+  width: 100%; font-size: 30rpx; color: #1E293B;
+  padding: 16rpx 0; border-bottom: 2rpx solid #F1F5F9;
+}
+.form-textarea {
+  width: 100%; font-size: 28rpx; color: #1E293B;
+  min-height: 160rpx; line-height: 1.6;
+}
+
+.date-row { display: flex; align-items: center; gap: 20rpx; }
+.date-field { flex: 1; }
+.date-label { font-size: 22rpx; color: #94A3B8; margin-bottom: 8rpx; }
+.date-value {
+  font-size: 28rpx; color: #1E293B; font-weight: 500;
+  padding: 16rpx 20rpx;
+  background: #F8FAFC; border-radius: 12rpx;
+}
+.date-separator { font-size: 28rpx; color: #94A3B8; flex-shrink: 0; }
+
+.points-row { display: flex; gap: 40rpx; }
+.points-item { flex: 1; }
+.points-label { font-size: 24rpx; color: #94A3B8; margin-bottom: 12rpx; }
+.points-input-wrap {
+  display: flex; align-items: center; gap: 8rpx;
+  background: #F8FAFC; border-radius: 12rpx; padding: 16rpx 20rpx;
+}
+.points-input { flex: 1; font-size: 32rpx; font-weight: 700; color: #2563EB; }
+.points-unit { font-size: 24rpx; color: #94A3B8; }
+
+.submit-area { padding: 40rpx 24rpx 0; }

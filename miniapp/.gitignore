@@ -1,0 +1,14 @@
+# Mini-app specific ignores
+
+# WeChat Developer Tools
+.tea/
+.wechatide.ib.json
+user.data
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
