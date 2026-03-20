@@ -6,29 +6,29 @@
     <view class="hero gradient-blue">
       <view class="hero-emoji">🏆</view>
       <view class="hero-title">FICC Connect</view>
-      <view class="hero-subtitle">一起打卡，一起成长</view>
+      <view class="hero-subtitle">Check in together, grow together</view>
     </view>
 
     <view class="features">
       <view class="feature-item">
         <text class="feature-icon">🔥</text>
         <view class="feature-text">
-          <view class="feature-title">每日打卡</view>
-          <view class="feature-desc">坚持打卡，积累连击，赢得荣耀</view>
+          <view class="feature-title">Daily Check-in</view>
+          <view class="feature-desc">Stay consistent, build streaks, earn glory</view>
         </view>
       </view>
       <view class="feature-item">
         <text class="feature-icon">📸</text>
         <view class="feature-text">
-          <view class="feature-title">分享照片</view>
-          <view class="feature-desc">记录精彩瞬间，收获点赞</view>
+          <view class="feature-title">Share Photos</view>
+          <view class="feature-desc">Capture moments, get likes from colleagues</view>
         </view>
       </view>
       <view class="feature-item">
         <text class="feature-icon">🏅</text>
         <view class="feature-text">
-          <view class="feature-title">排行榜</view>
-          <view class="feature-desc">与同事竞技，角逐活动冠军</view>
+          <view class="feature-title">Leaderboard</view>
+          <view class="feature-desc">Compete with colleagues, win activity champions</view>
         </view>
       </view>
     </view>
@@ -37,17 +37,17 @@
       <button class="btn btn-primary btn-block btn-wechat"
               loading="{{loading}}"
               bindtap="handleLogin">
-        <text>微信一键登录</text>
+        <text>Login with WeChat</text>
       </button>
-      <view class="tip">登录即同意相关服务协议</view>
+      <view class="tip">By logging in, you agree to our terms of service</view>
     </view>
   </block>
 
   <!-- Team Select Step -->
   <block wx:if="{{step === 1}}">
     <view class="team-header">
-      <view class="team-title">选择您的部门</view>
-      <view class="team-subtitle">方便参与团队挑战赛</view>
+      <view class="team-title">Select Your Department</view>
+      <view class="team-subtitle">For team challenges and rankings</view>
     </view>
 
     <view class="team-grid">
@@ -66,7 +66,7 @@
       <button class="btn btn-primary btn-block"
               disabled="{{!selectedTeamId}}"
               bindtap="confirmTeam">
-        确认，开始挑战！🚀
+        Confirm & Start! 🚀
       </button>
     </view>
   </block>

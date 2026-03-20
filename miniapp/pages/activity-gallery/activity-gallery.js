@@ -18,7 +18,7 @@ Page({
       this.setData({ activityId: options.activityId });
       this.loadActivityGallery(options.activityId);
     } else {
-      showToast('缺少活动ID');
+      showToast('Missing activity ID');
       wx.navigateBack();
     }
   },
@@ -49,7 +49,7 @@ Page({
         stats: {}, 
         loading: false 
       });
-      showToast('加载失败');
+      showToast('Failed to load');
     }
   },
 
@@ -68,7 +68,7 @@ Page({
         wx.vibrateShort({ type: 'light', fail: () => {} });
       }
     } catch (e) {
-      showToast('操作失败');
+      showToast('Failed');
     }
   },
 
@@ -76,7 +76,7 @@ Page({
     const { url } = e.currentTarget.dataset;
     
     if (!url) {
-      showToast('图片地址无效');
+      showToast('Invalid image URL');
       return;
     }
     const urls = this.data.photos.map(p => p.url);
@@ -87,7 +87,7 @@ Page({
       urls,
       fail: (err) => {
         console.error('Preview failed:', err);
-        showToast('预览失败，请重试');
+        showToast('Preview failed, please try again');
       }
     });
   }

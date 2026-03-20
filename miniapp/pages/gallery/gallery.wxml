@@ -3,8 +3,8 @@
 
   <!-- Header -->
   <view class="page-header">
-    <text class="page-title">我的活动相册</text>
-    <text class="page-subtitle">点击查看活动照片墙</text>
+    <text class="page-title">My Activity Gallery</text>
+    <text class="page-subtitle">Tap to view photo collections</text>
   </view>
 
   <!-- Loading -->
@@ -27,9 +27,9 @@
       <view class="card-content">
         <view class="card-title">{{item.title}}</view>
         <view class="card-meta">
-          <text class="meta-item">{{item.participant_count || 0}}人参与</text>
+          <text class="meta-item">{{item.participant_count || 0}} joined</text>
           <text class="meta-divider">·</text>
-          <text class="meta-item">{{item.status === 'active' ? '进行中' : item.status === 'completed' ? '已结束' : '已归档'}}</text>
+          <text class="meta-item">{{item.status === 'active' ? 'Active' : item.status === 'completed' ? 'Ended' : 'Archived'}}</text>
         </view>
       </view>
       <view class="card-arrow">›</view>
@@ -39,8 +39,8 @@
   <!-- Empty state -->
   <view class="empty-container" wx:else>
     <text class="empty-icon">📸</text>
-    <text class="empty-title">暂无参与的活动</text>
-    <text class="empty-desc">参加活动后，这里会显示你的活动相册</text>
+    <text class="empty-title">No activities yet</text>
+    <text class="empty-desc">Join activities to see your photo galleries here</text>
   </view>
 
 </view>

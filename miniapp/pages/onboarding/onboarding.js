@@ -22,7 +22,7 @@ Page({
       // Step 1: Get user profile FIRST (must be called directly from tap)
       const profileRes = await new Promise((resolve, reject) => {
         wx.getUserProfile({
-          desc: '用于展示您的头像和昵称',
+          desc: 'To display your avatar and nickname',
           success: resolve,
           fail: reject
         });
@@ -35,7 +35,7 @@ Page({
         wx.login({ success: resolve, fail: reject });
       });
 
-      showLoading('登录中...');
+      showLoading('Logging in...');
 
       // Step 3: Login with backend
       const result = await authAPI.wechatLogin(loginRes.code, nickName, avatarUrl);
@@ -56,7 +56,7 @@ Page({
     } catch (error) {
       console.error('Login error:', error);
       if (error.message !== 'cancel') {
-        showToast('登录失败，请重试');
+        showToast('Login failed, please try again');
       }
     }
   },
@@ -72,11 +72,11 @@ Page({
 
   async confirmTeam() {
     if (!this.data.selectedTeamId) {
-      showToast('请选择您的部门');
+      showToast('Please select your department');
       return;
     }
 
-    showLoading('保存中...');
+    showLoading('Saving...');
     try {
       await authAPI.updateProfile({ team_id: this.data.selectedTeamId });
       const profile = await authAPI.getProfile();
@@ -85,7 +85,7 @@ Page({
       wx.reLaunch({ url: '/pages/home/home' });
     } catch (error) {
       hideLoading();
-      showToast('保存失败，请重试');
+      showToast('Failed to save, please try again');
     }
   }
 });

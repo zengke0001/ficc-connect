@@ -28,7 +28,7 @@ Page({
       });
     } catch (e) {
       this.setData({ loading: false });
-      showToast('加载失败');
+      showToast('Failed to load');
     }
   },
 
@@ -41,13 +41,13 @@ Page({
         });
       });
       // In a real app, upload the avatar image here
-      showToast('头像更新功能开发中');
+      showToast('Avatar update coming soon');
     } catch (e) { }
   },
 
   async logout() {
     try {
-      await showConfirm('退出登录', '确定要退出登录吗？');
+      await showConfirm('Log Out', 'Are you sure you want to log out?');
       getApp().clearAuth();
       wx.reLaunch({ url: '/pages/onboarding/onboarding' });
     } catch (e) { }

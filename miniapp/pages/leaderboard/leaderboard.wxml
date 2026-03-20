@@ -3,9 +3,9 @@
 
   <!-- Type switcher -->
   <view class="type-bar">
-    <view class="type-btn {{type === 'daily' ? 'active' : ''}}" bindtap="switchType" data-type="daily">今日</view>
-    <view class="type-btn {{type === 'weekly' ? 'active' : ''}}" bindtap="switchType" data-type="weekly">本周</view>
-    <view class="type-btn {{type === 'overall' ? 'active' : ''}}" bindtap="switchType" data-type="overall">总榜</view>
+    <view class="type-btn {{type === 'daily' ? 'active' : ''}}" bindtap="switchType" data-type="daily">Today</view>
+    <view class="type-btn {{type === 'weekly' ? 'active' : ''}}" bindtap="switchType" data-type="weekly">Week</view>
+    <view class="type-btn {{type === 'overall' ? 'active' : ''}}" bindtap="switchType" data-type="overall">All</view>
   </view>
 
   <!-- Top 3 podium -->
@@ -14,7 +14,7 @@
     <view class="podium-item second">
       <image class="podium-avatar" src="{{rankings[1].avatar_url}}" mode="aspectFill"/>
       <view class="podium-name">{{rankings[1].nickname}}</view>
-      <view class="podium-pts">{{rankings[1].points}}分</view>
+      <view class="podium-pts">{{rankings[1].points}} pts</view>
       <view class="podium-stand second-stand">🥈</view>
     </view>
     <!-- 1st -->
@@ -22,24 +22,24 @@
       <view class="crown">👑</view>
       <image class="podium-avatar first-avatar" src="{{rankings[0].avatar_url}}" mode="aspectFill"/>
       <view class="podium-name">{{rankings[0].nickname}}</view>
-      <view class="podium-pts">{{rankings[0].points}}分</view>
+      <view class="podium-pts">{{rankings[0].points}} pts</view>
       <view class="podium-stand first-stand">🥇</view>
     </view>
     <!-- 3rd -->
     <view class="podium-item third">
       <image class="podium-avatar" src="{{rankings[2].avatar_url}}" mode="aspectFill"/>
       <view class="podium-name">{{rankings[2].nickname}}</view>
-      <view class="podium-pts">{{rankings[2].points}}分</view>
+      <view class="podium-pts">{{rankings[2].points}} pts</view>
       <view class="podium-stand third-stand">🥉</view>
     </view>
   </view>
 
   <!-- My rank callout -->
   <view class="my-rank-bar" wx:if="{{myRank && myRank.rank > 3}}">
-    <text class="my-rank-text">你当前排名</text>
+    <text class="my-rank-text">Your rank</text>
     <text class="my-rank-val">#{{myRank.rank}}</text>
-    <text class="my-rank-pts">{{myRank.points}}分</text>
-    <text class="my-rank-hint">继续打卡赶超！🔥</text>
+    <text class="my-rank-pts">{{myRank.points}} pts</text>
+    <text class="my-rank-hint">Keep checking in! 🔥</text>
   </view>
 
   <!-- Full list -->
@@ -49,15 +49,15 @@
       <view class="rank-num">{{item.medal}}</view>
       <image class="avatar avatar-sm" src="{{item.avatar_url}}" mode="aspectFill"/>
       <view class="rank-info">
-        <view class="rank-name">{{item.nickname}} <text wx:if="{{item.isMe}}" class="me-tag">我</text></view>
+        <view class="rank-name">{{item.nickname}} <text wx:if="{{item.isMe}}" class="me-tag">Me</text></view>
         <view class="rank-meta">
           <text class="team-text" style="color: {{item.team_color}}">{{item.team_name}}</text>
-          <text class="streak-text" wx:if="{{item.current_streak > 0}}"> · 🔥{{item.current_streak}}连击</text>
+          <text class="streak-text" wx:if="{{item.current_streak > 0}}"> · 🔥{{item.current_streak}} streak</text>
         </view>
       </view>
       <view class="rank-score">
         <view class="score-pts">{{item.points}}</view>
-        <view class="score-label">分</view>
+        <view class="score-label">pts</view>
       </view>
     </view>
   </view>

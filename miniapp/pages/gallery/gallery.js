@@ -34,7 +34,7 @@ Page({
     } catch (e) {
       console.error('Load activities error:', e);
       this.setData({ loading: false });
-      showToast('加载失败');
+      showToast('Failed to load');
     }
   },
 

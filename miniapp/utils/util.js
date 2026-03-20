@@ -7,10 +7,10 @@ const formatDate = (dateStr) => {
   const now = new Date();
   const diff = now - date;
 
-  if (diff < 60000) return '刚刚';
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`;
+  if (diff < 60000) return 'Just now';
+  if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)} days ago`;
 
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -26,21 +26,22 @@ const formatDateRange = (startDate, endDate) => {
   return `${fmt(start)} - ${fmt(end)}`;
 };
 
-// Format date period in friendly way (e.g., "3月1日 - 3月31日")
+// Format date period in friendly way (e.g., "Mar 1 - Mar 31")
 const formatDatePeriod = (startDate, endDate) => {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const start = new Date(startDate);
   const end = new Date(endDate);
-  const startMonth = start.getMonth() + 1;
+  const startMonth = months[start.getMonth()];
   const startDay = start.getDate();
-  const endMonth = end.getMonth() + 1;
+  const endMonth = months[end.getMonth()];
   const endDay = end.getDate();
   
   // Same month
-  if (startMonth === endMonth) {
-    return `${startMonth}月${startDay}日 - ${endDay}日`;
+  if (start.getMonth() === end.getMonth()) {
+    return `${startMonth} ${startDay} - ${endDay}`;
   }
   // Different months
-  return `${startMonth}月${startDay}日 - ${endMonth}月${endDay}日`;
+  return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
 };
 
 // Get activity progress info
@@ -60,7 +61,7 @@ const getActivityProgress = (startDate, endDate) => {
     const daysToStart = Math.ceil((start - now) / 86400000);
     return { 
       status: 'upcoming', 
-      text: `${daysToStart}天后开始`,
+      text: `Starts in ${daysToStart} day${daysToStart > 1 ? 's' : ''}`,
       progress: 0,
       totalDays,
       currentDay: 0
@@ -70,7 +71,7 @@ const getActivityProgress = (startDate, endDate) => {
   if (now > end) {
     return { 
       status: 'ended', 
-      text: '已结束',
+      text: 'Ended',
       progress: 100,
       totalDays,
       currentDay: totalDays
@@ -83,11 +84,11 @@ const getActivityProgress = (startDate, endDate) => {
   
   return { 
     status: 'active', 
-    text: daysLeft === 0 ? '最后一天' : daysLeft === 1 ? '明天结束' : `还剩${daysLeft}天`,
+    text: daysLeft === 0 ? 'Last day' : daysLeft === 1 ? 'Ends tomorrow' : `${daysLeft} days left`,
     progress,
     totalDays,
     currentDay,
-    dayText: `第${currentDay}天`
+    dayText: `Day ${currentDay}`
   };
 };
 
@@ -96,9 +97,9 @@ const daysRemaining = (endDate) => {
   const end = new Date(endDate);
   const now = new Date();
   const diff = Math.ceil((end - now) / 86400000);
-  if (diff <= 0) return '已结束';
-  if (diff === 1) return '最后1天';
-  return `还剩${diff}天`;
+  if (diff <= 0) return 'Ended';
+  if (diff === 1) return 'Last day';
+  return `${diff}d left`;
 };
 
 // Format large numbers
@@ -131,7 +132,7 @@ const showToast = (title, icon = 'none', duration = 2000) => {
 };
 
 // Show loading
-const showLoading = (title = '加载中...') => {
+const showLoading = (title = 'Loading...') => {
   wx.showLoading({ title, mask: true });
 };
 
@@ -142,7 +143,7 @@ const showConfirm = (title, content) => {
   return new Promise((resolve, reject) => {
     wx.showModal({
       title, content,
-      confirmColor: '#2563EB',
+      confirmColor: '#FF6B35',
       success: (res) => res.confirm ? resolve() : reject(new Error('cancelled'))
     });
   });

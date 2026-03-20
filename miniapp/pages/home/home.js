@@ -51,7 +51,7 @@ Page({
   goToCheckin(e) {
     const { activityId, checkinId, hasCheckin } = e.currentTarget.dataset;
     if (hasCheckin) {
-      showToast('今日已打卡 ✓');
+      showToast('Already checked in ✓');
       return;
     }
     wx.navigateTo({ url: `/pages/checkin/checkin?activityId=${activityId}` });

@@ -51,7 +51,7 @@ Page({
       });
     } catch (error) {
       this.setData({ loading: false });
-      showToast('加载失败');
+      showToast('Failed to load');
     }
   },
 

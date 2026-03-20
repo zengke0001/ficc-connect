@@ -13,15 +13,15 @@
   <!-- Winners podium -->
   <view class="winners-section" wx:if="{{winners.length > 0}}">
     <view class="winners-header">
-      <text class="winners-title">🏆 活动冠军</text>
+      <text class="winners-title">🏆 Champions</text>
     </view>
     <view class="winners-row">
       <view wx:for="{{winners}}" wx:key="id" class="winner-card">
         <view class="winner-rank">{{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}}</view>
         <image class="winner-avatar" src="{{item.avatar_url}}" mode="aspectFill"/>
         <view class="winner-name">{{item.nickname}}</view>
-        <view class="winner-pts">{{item.total_points}}分</view>
-        <view class="winner-streak" wx:if="{{item.max_streak > 0}}">最长{{item.max_streak}}天连击</view>
+        <view class="winner-pts">{{item.total_points}} pts</view>
+        <view class="winner-streak" wx:if="{{item.max_streak > 0}}">Best streak: {{item.max_streak}} days</view>
       </view>
     </view>
   </view>
@@ -30,24 +30,24 @@
   <view class="stats-bar" wx:if="{{stats}}">
     <view class="stat-chip">
       <text class="s-val">{{stats.total_participants || 0}}</text>
-      <text class="s-key">参与者</text>
+      <text class="s-key">Participants</text>
     </view>
     <view class="stat-chip">
       <text class="s-val">{{stats.total_checkins || 0}}</text>
-      <text class="s-key">总打卡</text>
+      <text class="s-key">Check-ins</text>
     </view>
     <view class="stat-chip">
       <text class="s-val">{{stats.total_photos || 0}}</text>
-      <text class="s-key">照片</text>
+      <text class="s-key">Photos</text>
     </view>
   </view>
 
   <!-- Photo grid -->
-  <view class="section-title">📸 活动照片墙</view>
+  <view class="section-title">📸 Photo Wall</view>
 
   <!-- Loading state -->
   <view class="loading-state" wx:if="{{loading}}">
-    <text>加载中...</text>
+    <text>Loading...</text>
   </view>
 
   <!-- Photo grid -->
@@ -79,7 +79,7 @@
   <!-- Empty state -->
   <view class="empty-state" wx:else>
     <text class="empty-icon">📷</text>
-    <text class="empty-text">暂无打卡照片</text>
+    <text class="empty-text">No photos yet</text>
   </view>
 
   <view style="height: 40rpx;"></view>

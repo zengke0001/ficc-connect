@@ -51,13 +51,13 @@ Page({
 
   async submit() {
     const { form, coverPath } = this.data;
-    if (!form.title.trim()) { showToast('请输入活动标题'); return; }
-    if (!form.description.trim()) { showToast('请输入活动描述'); return; }
-    if (!form.start_date || !form.end_date) { showToast('请选择活动时间'); return; }
-    if (form.end_date < form.start_date) { showToast('结束时间不能早于开始时间'); return; }
+    if (!form.title.trim()) { showToast('Please enter a title'); return; }
+    if (!form.description.trim()) { showToast('Please enter a description'); return; }
+    if (!form.start_date || !form.end_date) { showToast('Please select dates'); return; }
+    if (form.end_date < form.start_date) { showToast('End date cannot be earlier than start date'); return; }
 
     this.setData({ submitting: true });
-    showLoading('发布中...');
+    showLoading('Creating...');
 
     try {
       let coverImageUrl = null;
@@ -75,7 +75,7 @@ Page({
 
       hideLoading();
       wx.vibrateShort({ type: 'medium' });
-      showToast('活动发布成功！🎉');
+      showToast('Activity created! 🎉');
 
       setTimeout(() => {
         wx.redirectTo({
@@ -85,7 +85,7 @@ Page({
     } catch (error) {
       hideLoading();
       this.setData({ submitting: false });
-      showToast(error.message || '发布失败，请重试');
+      showToast(error.message || 'Failed to create, please try again');
     }
   }
 });

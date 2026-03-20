@@ -5,27 +5,27 @@
   <view class="success-overlay" wx:if="{{showSuccess}}">
     <view class="success-card pop-in">
       <view class="success-emoji">🎉</view>
-      <view class="success-title">打卡成功！</view>
+      <view class="success-title">Check-in Complete!</view>
 
       <view class="success-stats">
         <view class="stat-item">
           <view class="stat-value gradient-orange-text">+{{successData.pointsEarned}}</view>
-          <view class="stat-label">积分</view>
+          <view class="stat-label">Points</view>
         </view>
         <view class="stat-divider"></view>
         <view class="stat-item">
           <view class="stat-value gradient-fire-text">🔥{{successData.streak}}</view>
-          <view class="stat-label">连击天数</view>
+          <view class="stat-label">Day Streak</view>
         </view>
       </view>
 
       <view class="streak-bonus" wx:if="{{successData.streakBonus > 0}}">
-        🌟 连击奖励 +{{successData.streakBonus}} 积分！
+        🌟 Streak bonus +{{successData.streakBonus}} pts!
       </view>
 
       <!-- New achievements -->
       <view class="new-achievements" wx:if="{{successData.newAchievements.length > 0}}">
-        <view class="achievements-title">🏆 解锁新成就！</view>
+        <view class="achievements-title">🏆 Achievement Unlocked!</view>
         <view wx:for="{{successData.newAchievements}}" wx:key="id" class="achievement-item">
           <text>{{item.name}}</text>
           <text class="ach-points">+{{item.points_reward}}</text>
@@ -33,7 +33,7 @@
       </view>
 
       <button class="btn btn-primary btn-block success-btn" bindtap="goBack">
-        太棒了！
+        Awesome!
       </button>
     </view>
   </view>
@@ -46,19 +46,19 @@
       <image class="act-cover-img" src="{{activity.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
       <view class="act-overlay">
         <view class="act-name">{{activity.title}}</view>
-        <view class="act-date">今天，坚持一下！</view>
+        <view class="act-date">Today - keep it up!</view>
       </view>
     </view>
 
     <!-- Photo picker -->
     <view class="section-card card card-body">
-      <view class="card-label">📸 添加打卡照片（可选）</view>
+      <view class="card-label">📸 Add Photo (Optional)</view>
 
       <view wx:if="{{!photoPath}}" class="photo-picker" bindtap="choosePhoto">
         <view class="picker-inner">
           <text class="picker-icon">📷</text>
-          <text class="picker-text">点击拍照或选择图片</text>
-          <text class="picker-hint">记录今天的精彩瞬间</text>
+          <text class="picker-text">Tap to take or select photo</text>
+          <text class="picker-hint">Capture your moment</text>
         </view>
       </view>
 
@@ -70,10 +70,10 @@
 
     <!-- Comment input -->
     <view class="section-card card card-body">
-      <view class="card-label">💬 说点什么（可选）</view>
+      <view class="card-label">💬 Say Something (Optional)</view>
       <textarea
         class="comment-input"
-        placeholder="今天的感受..."
+        placeholder="How are you feeling today..."
         placeholder-class="input-placeholder"
         maxlength="200"
         bindinput="onCommentInput"
@@ -88,7 +88,7 @@
       <button class="btn btn-checkin btn-block"
               loading="{{submitting}}"
               bindtap="submit">
-        🔥 立即打卡
+        🔥 Check-in Now
       </button>
     </view>
 

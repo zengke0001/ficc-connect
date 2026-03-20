@@ -25,7 +25,7 @@ Page({
       const result = await activityAPI.getOne(id);
       this.setData({ activity: result.data.activity });
     } catch (e) {
-      showToast('加载失败');
+      showToast('Failed to load');
     }
   },
 
@@ -47,7 +47,7 @@ Page({
       }
     } catch (e) {
       if (e.errMsg && !e.errMsg.includes('cancel')) {
-        showToast('选择图片失败');
+        showToast('Failed to select photo');
       }
     }
   },
@@ -63,7 +63,7 @@ Page({
   async submit() {
     if (this.data.submitting) return;
     this.setData({ submitting: true });
-    showLoading('打卡中...');
+    showLoading('Checking in...');
 
     try {
       // 1. Submit check-in
@@ -79,7 +79,7 @@ Page({
           await photoAPI.upload(this.data.photoPath, this.data.activityId, checkin.id);
         } catch (e) {
           // Photo upload failed but check-in succeeded
-          showToast('打卡成功，照片上传失败');
+          showToast('Check-in done, photo upload failed');
         }
       }
 
@@ -103,7 +103,7 @@ Page({
     } catch (error) {
       hideLoading();
       this.setData({ submitting: false });
-      showToast(error.message || '打卡失败，请重试');
+      showToast(error.message || 'Check-in failed, please try again');
     }
   },
 

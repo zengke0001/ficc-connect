@@ -50,20 +50,20 @@ Page({
       wx.setNavigationBarTitle({ title: activity.title });
     } catch (error) {
       this.setData({ loading: false });
-      showToast('加载失败');
+      showToast('Failed to load');
     }
   },
 
   async joinActivity() {
-    showLoading('加入中...');
+    showLoading('Joining...');
     try {
       await activityAPI.join(this.data.id);
       hideLoading();
-      showToast('加入成功！🎉');
+      showToast('Joined successfully! 🎉');
       this.loadDetail(this.data.id);
     } catch (error) {
       hideLoading();
-      showToast(error.message || '加入失败');
+      showToast(error.message || 'Failed to join');
     }
   },
 
@@ -82,7 +82,7 @@ Page({
           medal: getRankMedal(item.rank)
         }))
       });
-    } catch (e) { showToast('加载失败'); }
+    } catch (e) { showToast('Failed to load'); }
   },
 
   goToLeaderboard() {
@@ -90,7 +90,7 @@ Page({
   },
 
   goToGallery() {
-    wx.navigateTo({ url: `/pages/gallery/gallery?activityId=${this.data.id}` });
+    wx.navigateTo({ url: `/pages/activity-gallery/activity-gallery?activityId=${this.data.id}` });
   },
 
   goToCheckins() {
@@ -107,6 +107,6 @@ Page({
           : p
       );
       this.setData({ recentPhotos: photos });
-    }).catch(() => showToast('操作失败'));
+    }).catch(() => showToast('Failed'));
   }
 });

@@ -6,9 +6,9 @@
     <view class="header-top">
       <view class="header-greeting">
         <view class="greeting-text">
-          <text>你好，</text><text class="nickname">{{userInfo.nickname}}</text><text> 👋</text>
+          <text>Hello, </text><text class="nickname">{{userInfo.nickname}}</text><text> 👋</text>
         </view>
-        <view class="greeting-sub">保持节奏，今天也要打卡！</view>
+        <view class="greeting-sub">Keep the streak alive today!</view>
       </view>
       <image class="avatar avatar-md" src="{{userInfo.avatar_url}}" mode="aspectFill"
              bindtap="goToProfile"/>
@@ -17,15 +17,15 @@
     <!-- Streak Banner -->
     <view class="streak-banner" wx:if="{{totalStreak > 0}}">
       <text class="streak-fire">🔥</text>
-      <text class="streak-text">连续打卡 {{totalStreak}} 天！继续冲！</text>
+      <text class="streak-text">{{totalStreak}} day streak! Keep going!</text>
     </view>
   </view>
 
   <!-- Today's Activities -->
   <view class="section">
     <view class="section-header">
-      <view class="section-title">我的活动</view>
-      <view class="section-link" bindtap="goToArchived">已归档 ›</view>
+      <view class="section-title">My Activities</view>
+      <view class="section-link" bindtap="goToArchived">Archived ›</view>
     </view>
 
     <!-- Loading skeleton -->
@@ -42,7 +42,7 @@
           <view class="act-title">{{item.title}}</view>
           <view class="act-meta">
             <view class="streak-badge" wx:if="{{item.current_streak > 0}}">
-              <text>{{item.streakFlame}} {{item.current_streak}}天</text>
+              <text>{{item.streakFlame}} {{item.current_streak}}d</text>
             </view>
           </view>
         </view>
@@ -51,10 +51,10 @@
               data-has-checkin="{{item.has_checkin}}">
           <view wx:if="{{item.has_checkin}}" class="checkin-done">
             <text class="done-icon">✓</text>
-            <text class="done-text">已打卡</text>
+            <text class="done-text">Done</text>
           </view>
           <view wx:else class="checkin-todo">
-            <text class="todo-text">打卡</text>
+            <text class="todo-text">Check-in</text>
           </view>
         </view>
       </view>
@@ -64,9 +64,9 @@
     <view wx:else class="empty-card card">
       <view class="empty-state">
         <text class="icon">🎯</text>
-        <text class="text">还没有参与活动</text>
+        <text class="text">No activities yet</text>
         <button class="btn btn-primary discover-btn" bindtap="goToDiscover">
-          发现活动
+          Discover
         </button>
       </view>
     </view>
@@ -74,23 +74,23 @@
 
   <!-- Quick Actions -->
   <view class="section">
-    <view class="section-title">快捷操作</view>
+    <view class="section-title">Quick Actions</view>
     <view class="quick-actions">
       <view class="quick-item" bindtap="goToDiscover">
         <view class="quick-icon gradient-blue">🔍</view>
-        <view class="quick-label">发现活动</view>
+        <view class="quick-label">Discover</view>
       </view>
       <view class="quick-item" bindtap="goToCreate">
         <view class="quick-icon gradient-green">➕</view>
-        <view class="quick-label">发起活动</view>
+        <view class="quick-label">Create</view>
       </view>
       <view class="quick-item" bindtap="goToGallery">
         <view class="quick-icon gradient-orange">📸</view>
-        <view class="quick-label">相册</view>
+        <view class="quick-label">Gallery</view>
       </view>
       <view class="quick-item" bindtap="goToArchived">
         <view class="quick-icon gradient-purple">📂</view>
-        <view class="quick-label">已归档</view>
+        <view class="quick-label">Archived</view>
       </view>
     </view>
   </view>
