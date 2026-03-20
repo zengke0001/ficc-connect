@@ -173,19 +173,30 @@ class PhotoService {
     return { likes_count: countResult.rows[0]?.likes_count || 0 };
   }
 
-  async getActivityGallery(activityId) {
+  async getActivityGallery(activityId, userId) {
+    // Build the like check join based on whether user is authenticated
+    let likeJoin = 'LEFT JOIN likes l ON p.id = l.photo_id AND 1=0';
+    const params = [activityId];
+    
+    if (userId) {
+      params.push(userId);
+      likeJoin = `LEFT JOIN likes l ON p.id = l.photo_id AND l.user_id = $${params.length}`;
+    }
+
     // Get all photos for completed activity
     const photosResult = await query(`
       SELECT 
         p.*,
         u.nickname, u.avatar_url,
-        t.name as team_name, t.color as team_color
+        t.name as team_name, t.color as team_color,
+        CASE WHEN l.id IS NOT NULL THEN true ELSE false END as is_liked
       FROM photos p
       JOIN users u ON p.user_id = u.id
       LEFT JOIN teams t ON u.team_id = t.id
+      ${likeJoin}
       WHERE p.activity_id = $1
       ORDER BY p.likes_count DESC, p.created_at DESC
-    `, [activityId]);
+    `, params);
 
     // Get leaderboard (winners)
     const winnersResult = await query(`

@@ -51,7 +51,7 @@ class PhotoController {
 
   async getGallery(req, res, next) {
     try {
-      const data = await photoService.getActivityGallery(req.params.activityId);
+      const data = await photoService.getActivityGallery(req.params.activityId, req.user?.id);
       res.json({ success: true, data });
     } catch (error) {
       next(error);

@@ -20,7 +20,7 @@ const optionalAuth = async (req, res, next) => {
 
 router.post('/upload', auth, upload.single('photo'), photoController.upload.bind(photoController));
 router.get('/activity/:activityId', optionalAuth, photoController.getActivityPhotos.bind(photoController));
-router.get('/gallery/:activityId', photoController.getGallery.bind(photoController));
+router.get('/gallery/:activityId', optionalAuth, photoController.getGallery.bind(photoController));
 router.post('/:id/like', auth, photoController.like.bind(photoController));
 router.delete('/:id/like', auth, photoController.unlike.bind(photoController));
 

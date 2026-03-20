@@ -26,6 +26,71 @@ const formatDateRange = (startDate, endDate) => {
   return `${fmt(start)} - ${fmt(end)}`;
 };
 
+// Format date period in friendly way (e.g., "3月1日 - 3月31日")
+const formatDatePeriod = (startDate, endDate) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const startMonth = start.getMonth() + 1;
+  const startDay = start.getDate();
+  const endMonth = end.getMonth() + 1;
+  const endDay = end.getDate();
+  
+  // Same month
+  if (startMonth === endMonth) {
+    return `${startMonth}月${startDay}日 - ${endDay}日`;
+  }
+  // Different months
+  return `${startMonth}月${startDay}日 - ${endMonth}月${endDay}日`;
+};
+
+// Get activity progress info
+const getActivityProgress = (startDate, endDate) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const now = new Date();
+  
+  // Reset time to midnight for accurate day calculation
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+  now.setHours(0, 0, 0, 0);
+  
+  const totalDays = Math.ceil((end - start) / 86400000) + 1;
+  
+  if (now < start) {
+    const daysToStart = Math.ceil((start - now) / 86400000);
+    return { 
+      status: 'upcoming', 
+      text: `${daysToStart}天后开始`,
+      progress: 0,
+      totalDays,
+      currentDay: 0
+    };
+  }
+  
+  if (now > end) {
+    return { 
+      status: 'ended', 
+      text: '已结束',
+      progress: 100,
+      totalDays,
+      currentDay: totalDays
+    };
+  }
+  
+  const currentDay = Math.ceil((now - start) / 86400000) + 1;
+  const progress = Math.round((currentDay / totalDays) * 100);
+  const daysLeft = Math.ceil((end - now) / 86400000);
+  
+  return { 
+    status: 'active', 
+    text: daysLeft === 0 ? '最后一天' : daysLeft === 1 ? '明天结束' : `还剩${daysLeft}天`,
+    progress,
+    totalDays,
+    currentDay,
+    dayText: `第${currentDay}天`
+  };
+};
+
 // Days remaining in activity
 const daysRemaining = (endDate) => {
   const end = new Date(endDate);
@@ -86,6 +151,8 @@ const showConfirm = (title, content) => {
 module.exports = {
   formatDate,
   formatDateRange,
+  formatDatePeriod,
+  getActivityProgress,
   daysRemaining,
   formatNumber,
   getStreakFlame,

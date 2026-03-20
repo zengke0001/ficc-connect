@@ -20,8 +20,8 @@
 
 .section { padding: 40rpx 32rpx 0; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24rpx; }
-.section-title { font-size: 34rpx; font-weight: 700; color: #1E293B; }
-.section-link { font-size: 26rpx; color: #2563EB; }
+.section-title { font-size: 34rpx; font-weight: 700; color: var(--text-primary); }
+.section-link { font-size: 26rpx; color: var(--primary); }
 
 /* Activity row card */
 .activity-row {
@@ -29,22 +29,22 @@
   padding: 24rpx;
   margin-bottom: 20rpx;
 }
-.act-cover { width: 100rpx; height: 100rpx; border-radius: 16rpx; flex-shrink: 0; background: #F1F5F9; }
+.act-cover { width: 100rpx; height: 100rpx; border-radius: 16rpx; flex-shrink: 0; background: var(--bg-tertiary); }
 .act-info { flex: 1; min-width: 0; }
-.act-title { font-size: 30rpx; font-weight: 600; color: #1E293B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act-title { font-size: 30rpx; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .act-meta { display: flex; align-items: center; gap: 12rpx; margin-top: 10rpx; }
 
 .act-checkin-btn { flex-shrink: 0; }
 .checkin-done {
   display: flex; flex-direction: column; align-items: center; gap: 4rpx;
-  background: #ECFDF5; border-radius: 16rpx; padding: 14rpx 24rpx;
+  background: var(--bg-tertiary); border-radius: 16rpx; padding: 14rpx 24rpx;
 }
-.done-icon { font-size: 28rpx; color: #10B981; font-weight: 700; }
-.done-text { font-size: 20rpx; color: #10B981; }
+.done-icon { font-size: 28rpx; color: var(--success); font-weight: 700; }
+.done-text { font-size: 20rpx; color: var(--success); }
 .checkin-todo {
-  background: linear-gradient(135deg, #10B981, #34D399);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   border-radius: 16rpx; padding: 18rpx 28rpx;
-  box-shadow: 0 4rpx 14rpx rgba(16,185,129,0.4);
+  box-shadow: 0 4rpx 14rpx rgba(255, 107, 53, 0.4);
 }
 .todo-text { font-size: 28rpx; font-weight: 700; color: white; letter-spacing: 4rpx; }
 
@@ -55,7 +55,7 @@
 /* Skeleton */
 .skeleton-card {
   height: 148rpx; border-radius: 24rpx;
-  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border) 50%, var(--bg-tertiary) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   margin-bottom: 20rpx;
@@ -73,4 +73,4 @@
   display: flex; align-items: center; justify-content: center;
   font-size: 44rpx;
 }
-.quick-label { font-size: 22rpx; color: #64748B; }
+.quick-label { font-size: 22rpx; color: var(--text-secondary); }

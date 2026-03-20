@@ -1,25 +1,28 @@
 /* app.wxss - Global Styles */
 
-/* CSS Variables */
+/* CSS Variables - Coral Energy Theme */
 page {
-  --primary: #2563EB;
-  --primary-light: #60A5FA;
-  --primary-dark: #1D4ED8;
-  --accent: #F59E0B;
-  --accent-light: #FBBF24;
-  --success: #10B981;
-  --success-light: #34D399;
-  --danger: #EF4444;
-  --warning: #F59E0B;
+  --primary: #FF6B35;
+  --primary-light: #FF8F6B;
+  --primary-dark: #E85D2A;
+  --accent: #FFB800;
+  --accent-light: #FFD04D;
+  --success: #00C9A7;
+  --success-light: #4FD8BE;
+  --danger: #FF4757;
+  --warning: #FFA502;
+  --highlight: #FF6B6B;
+  --highlight-light: #FF8E8E;
   --bg-primary: #FFFFFF;
-  --bg-secondary: #F8FAFC;
-  --bg-tertiary: #F1F5F9;
-  --text-primary: #1E293B;
-  --text-secondary: #64748B;
-  --text-muted: #94A3B8;
-  --border: #E2E8F0;
-  --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --bg-secondary: #FFF8F5;
+  --bg-tertiary: #FFEFE9;
+  --text-primary: #2D3436;
+  --text-secondary: #636E72;
+  --text-muted: #B2BEC3;
+  --border: #FFE4D9;
+  --border-light: #FFF0EB;
+  --shadow: 0 2rpx 12rpx rgba(255, 107, 53, 0.10);
+  --shadow-lg: 0 8rpx 32rpx rgba(255, 107, 53, 0.18);
   --radius: 16rpx;
   --radius-lg: 24rpx;
   --radius-xl: 32rpx;
@@ -67,23 +70,23 @@ page {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #2563EB, #3B82F6);
+  background: linear-gradient(135deg, #FF6B35, #FF8F6B);
   color: #FFFFFF;
-  box-shadow: 0 4px 14rpx rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 14rpx rgba(255, 107, 53, 0.4);
 }
 
 .btn-primary:active {
   transform: scale(0.97);
-  box-shadow: 0 2px 8rpx rgba(37, 99, 235, 0.2);
+  box-shadow: 0 2px 8rpx rgba(255, 107, 53, 0.3);
 }
 
 .btn-checkin {
-  background: linear-gradient(135deg, #10B981, #34D399);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: #FFFFFF;
   font-size: 34rpx;
   padding: 30rpx 60rpx;
   border-radius: 60rpx;
-  box-shadow: 0 6px 20rpx rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6rpx 20rpx rgba(255, 107, 53, 0.4);
   letter-spacing: 4rpx;
 }
 
@@ -110,19 +113,19 @@ page {
 
 /* Gradient backgrounds */
 .gradient-blue {
-  background: linear-gradient(135deg, #2563EB, #60A5FA);
+  background: linear-gradient(135deg, #FF6B35, #FF8F6B);
 }
 
 .gradient-green {
-  background: linear-gradient(135deg, #10B981, #34D399);
+  background: linear-gradient(135deg, #00C9A7, #4FD8BE);
 }
 
 .gradient-orange {
-  background: linear-gradient(135deg, #F59E0B, #FBBF24);
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
 }
 
 .gradient-purple {
-  background: linear-gradient(135deg, #7C3AED, #A78BFA);
+  background: linear-gradient(135deg, var(--highlight), var(--highlight-light));
 }
 
 /* Avatars */
@@ -146,11 +149,11 @@ page {
   font-weight: 500;
 }
 
-.tag-blue { background: #EFF6FF; color: #2563EB; }
-.tag-green { background: #ECFDF5; color: #10B981; }
-.tag-orange { background: #FFFBEB; color: #F59E0B; }
-.tag-red { background: #FEF2F2; color: #EF4444; }
-.tag-purple { background: #F5F3FF; color: #7C3AED; }
+.tag-blue { background: var(--border-light); color: var(--primary); }
+.tag-green { background: #E6FFF9; color: var(--success); }
+.tag-orange { background: #FFF8EB; color: var(--accent); }
+.tag-red { background: #FFECEF; color: var(--danger); }
+.tag-purple { background: #FFF0F0; color: var(--highlight); }
 
 /* Dividers */
 .divider {
@@ -185,7 +188,7 @@ page {
   display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  background: linear-gradient(135deg, #F59E0B, #EF4444);
+  background: linear-gradient(135deg, var(--accent), var(--danger));
   color: white;
   padding: 8rpx 20rpx;
   border-radius: 100rpx;
@@ -198,7 +201,7 @@ page {
   display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  background: linear-gradient(135deg, #7C3AED, #A78BFA);
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
   color: white;
   padding: 8rpx 20rpx;
   border-radius: 100rpx;

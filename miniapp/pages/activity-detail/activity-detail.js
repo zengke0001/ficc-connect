@@ -1,6 +1,6 @@
 // pages/activity-detail/activity-detail.js
 const { activityAPI, photoAPI } = require('../../utils/api');
-const { formatDateRange, getRankMedal, showToast, showLoading, hideLoading, showConfirm } = require('../../utils/util');
+const { formatDatePeriod, getActivityProgress, getRankMedal, showToast, showLoading, hideLoading, showConfirm } = require('../../utils/util');
 
 Page({
   data: {
@@ -11,7 +11,8 @@ Page({
     leaderboard: [],
     recentPhotos: [],
     leaderboardType: 'overall',
-    loading: true
+    loading: true,
+    dateInfo: null
   },
 
   onLoad(options) {
@@ -29,6 +30,10 @@ Page({
       const result = await activityAPI.getOne(id);
       const { activity, isJoined, userParticipant, leaderboard, recentPhotos } = result.data;
 
+      // Calculate date progress info
+      const dateInfo = getActivityProgress(activity.start_date, activity.end_date);
+      dateInfo.period = formatDatePeriod(activity.start_date, activity.end_date);
+
       this.setData({
         activity,
         isJoined,
@@ -38,6 +43,7 @@ Page({
           medal: getRankMedal(item.rank)
         })),
         recentPhotos,
+        dateInfo,
         loading: false
       });
 

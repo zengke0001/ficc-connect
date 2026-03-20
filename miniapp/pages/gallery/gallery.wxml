@@ -1,85 +1,46 @@
 <!-- pages/gallery/gallery.wxml -->
-<scroll-view class="page-scroll" scroll-y>
+<view class="page-container">
 
-  <!-- Activity gallery -->
-  <block wx:if="{{isActivityGallery}}">
+  <!-- Header -->
+  <view class="page-header">
+    <text class="page-title">我的活动相册</text>
+    <text class="page-subtitle">点击查看活动照片墙</text>
+  </view>
 
-    <!-- Winners podium (if activity ended) -->
-    <view class="winners-section" wx:if="{{winners.length > 0}}">
-      <view class="winners-header">
-        <text class="winners-title">🏆 活动冠军</text>
-      </view>
-      <view class="winners-row">
-        <view wx:for="{{winners}}" wx:key="id" class="winner-card">
-          <view class="winner-rank">{{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}}</view>
-          <image class="winner-avatar" src="{{item.avatar_url}}" mode="aspectFill"/>
-          <view class="winner-name">{{item.nickname}}</view>
-          <view class="winner-pts">{{item.total_points}}分</view>
-          <view class="winner-streak" wx:if="{{item.max_streak > 0}}">最长{{item.max_streak}}天连击</view>
+  <!-- Loading -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-item" wx:for="{{[1,2,3]}}" wx:key="*this"></view>
+  </view>
+
+  <!-- Activity list -->
+  <view class="activity-list" wx:elif="{{activities.length > 0}}">
+    <view 
+      wx:for="{{activities}}" 
+      wx:key="id" 
+      class="activity-card"
+      bindtap="goToActivityGallery" 
+      data-id="{{item.id}}">
+      <image 
+        class="card-cover" 
+        src="{{item.cover_image_url || '/images/default-cover.png'}}" 
+        mode="aspectFill"/>
+      <view class="card-content">
+        <view class="card-title">{{item.title}}</view>
+        <view class="card-meta">
+          <text class="meta-item">{{item.participant_count || 0}}人参与</text>
+          <text class="meta-divider">·</text>
+          <text class="meta-item">{{item.status === 'active' ? '进行中' : item.status === 'completed' ? '已结束' : '已归档'}}</text>
         </view>
       </view>
+      <view class="card-arrow">›</view>
     </view>
+  </view>
 
-    <!-- Stats bar -->
-    <view class="stats-bar" wx:if="{{stats}}">
-      <view class="stat-chip">
-        <text class="s-val">{{stats.total_participants || 0}}</text>
-        <text class="s-key">参与者</text>
-      </view>
-      <view class="stat-chip">
-        <text class="s-val">{{stats.total_checkins || 0}}</text>
-        <text class="s-key">总打卡</text>
-      </view>
-      <view class="stat-chip">
-        <text class="s-val">{{stats.total_photos || 0}}</text>
-        <text class="s-key">照片</text>
-      </view>
-    </view>
+  <!-- Empty state -->
+  <view class="empty-container" wx:else>
+    <text class="empty-icon">📸</text>
+    <text class="empty-title">暂无参与的活动</text>
+    <text class="empty-desc">参加活动后，这里会显示你的活动相册</text>
+  </view>
 
-    <!-- Photo masonry grid -->
-    <view class="section-title-pad">📸 活动照片墙</view>
-    <view class="photo-masonry" wx:if="{{photos.length > 0}}">
-      <view wx:for="{{photos}}" wx:key="id" class="photo-cell fade-in">
-        <image src="{{item.thumbnail_url || item.url}}" mode="aspectFill"
-               class="cell-img"
-               data-url="{{item.url}}"
-               bindtap="previewPhoto"
-               lazy-load="true"/>
-        <view class="cell-overlay">
-          <view class="cell-user">
-            <image class="cell-avatar" src="{{item.avatar_url}}" mode="aspectFill"/>
-            <text class="cell-name">{{item.nickname}}</text>
-          </view>
-          <view class="cell-like" catchtap="likePhoto"
-                data-photo-id="{{item.id}}"
-                data-is-liked="{{item.is_liked}}">
-            <text class="like-heart">{{item.is_liked ? '❤️' : '🤍'}}</text>
-            <text class="like-count">{{item.likes_count}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="empty-state" wx:elif="{{!loading}}">
-      <text class="icon">📷</text>
-      <text class="text">暂无打卡照片</text>
-    </view>
-
-  </block>
-
-  <!-- My activities gallery list -->
-  <block wx:else>
-    <view class="gallery-list">
-      <view wx:for="{{activities}}" wx:key="id" class="gallery-activity-card card"
-            bindtap="goToActivityGallery" data-id="{{item.id}}">
-        <image class="gallery-cover" src="{{item.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
-        <view class="gallery-info">
-          <view class="gallery-title">{{item.title}}</view>
-          <view class="gallery-meta">{{item.participant_count}}人参与</view>
-        </view>
-      </view>
-    </view>
-  </block>
-
-  <view style="height: 40rpx;"></view>
-</scroll-view>
+</view>

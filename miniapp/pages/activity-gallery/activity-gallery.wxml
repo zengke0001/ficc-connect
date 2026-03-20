@@ -1,0 +1,86 @@
+<!-- pages/activity-gallery/activity-gallery.wxml -->
+<view class="page-container">
+
+  <!-- Activity info header -->
+  <view class="activity-header" wx:if="{{activity}}">
+    <image class="header-cover" src="{{activity.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+    <view class="header-overlay">
+      <view class="header-title">{{activity.title}}</view>
+      <view class="header-dates">{{activity.start_date}} ~ {{activity.end_date}}</view>
+    </view>
+  </view>
+
+  <!-- Winners podium -->
+  <view class="winners-section" wx:if="{{winners.length > 0}}">
+    <view class="winners-header">
+      <text class="winners-title">🏆 活动冠军</text>
+    </view>
+    <view class="winners-row">
+      <view wx:for="{{winners}}" wx:key="id" class="winner-card">
+        <view class="winner-rank">{{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}}</view>
+        <image class="winner-avatar" src="{{item.avatar_url}}" mode="aspectFill"/>
+        <view class="winner-name">{{item.nickname}}</view>
+        <view class="winner-pts">{{item.total_points}}分</view>
+        <view class="winner-streak" wx:if="{{item.max_streak > 0}}">最长{{item.max_streak}}天连击</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Stats bar -->
+  <view class="stats-bar" wx:if="{{stats}}">
+    <view class="stat-chip">
+      <text class="s-val">{{stats.total_participants || 0}}</text>
+      <text class="s-key">参与者</text>
+    </view>
+    <view class="stat-chip">
+      <text class="s-val">{{stats.total_checkins || 0}}</text>
+      <text class="s-key">总打卡</text>
+    </view>
+    <view class="stat-chip">
+      <text class="s-val">{{stats.total_photos || 0}}</text>
+      <text class="s-key">照片</text>
+    </view>
+  </view>
+
+  <!-- Photo grid -->
+  <view class="section-title">📸 活动照片墙</view>
+
+  <!-- Loading state -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <!-- Photo grid -->
+  <view class="photo-grid" wx:elif="{{photos.length > 0}}">
+    <view wx:for="{{photos}}" wx:key="id" class="photo-item">
+      <image 
+        class="photo-img" 
+        src="{{item.thumbnail_url || item.url}}" 
+        mode="aspectFill"
+        lazy-load="true"
+        bindtap="previewPhoto" 
+        data-url="{{item.url}}"/>
+      <view class="photo-overlay">
+        <view class="photo-user">
+          <image class="user-avatar" src="{{item.avatar_url}}" mode="aspectFill"/>
+          <text class="user-name">{{item.nickname}}</text>
+        </view>
+        <view class="photo-like" 
+              catchtap="likePhoto"
+              data-photo-id="{{item.id}}"
+              data-is-liked="{{item.is_liked}}">
+          <text class="like-icon">{{item.is_liked ? '❤️' : '🤍'}}</text>
+          <text class="like-num">{{item.likes_count || 0}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Empty state -->
+  <view class="empty-state" wx:else>
+    <text class="empty-icon">📷</text>
+    <text class="empty-text">暂无打卡照片</text>
+  </view>
+
+  <view style="height: 40rpx;"></view>
+</view>

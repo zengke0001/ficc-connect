@@ -11,9 +11,20 @@
       <image class="cover-img" src="{{activity.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
       <view class="cover-overlay">
         <view class="cover-title">{{activity.title}}</view>
+        <view class="cover-date">
+          <text class="date-period">📅 {{dateInfo.period}}</text>
+          <text class="date-status {{dateInfo.status}}">{{dateInfo.text}}</text>
+        </view>
         <view class="cover-meta">
-          📅 {{activity.start_date}} ~ {{activity.end_date}}
-          · 👥 {{activity.participant_count}}人参与
+          <text>👥 {{activity.participant_count}}人参与</text>
+          <text wx:if="{{dateInfo.status === 'active'}}"> · {{dateInfo.dayText}}/{{dateInfo.totalDays}}天</text>
+        </view>
+        <!-- Progress bar -->
+        <view class="progress-bar-wrap" wx:if="{{dateInfo.status === 'active'}}">
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{dateInfo.progress}}%"></view>
+          </view>
+          <text class="progress-text">{{dateInfo.progress}}%</text>
         </view>
         <view class="cover-status tag {{activity.status === 'active' ? 'tag-green' : 'tag-purple'}}">
           {{activity.status === 'active' ? '进行中' : '已结束'}}

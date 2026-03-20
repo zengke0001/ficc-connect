@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 100rpx 60rpx 80rpx;
-  background: linear-gradient(160deg, #1D4ED8 0%, #2563EB 50%, #3B82F6 100%);
+  background: linear-gradient(160deg, #E85D2A 0%, #FF6B35 50%, #FF8F6B 100%);
   border-radius: 0 0 60rpx 60rpx;
 }
 .hero-emoji { font-size: 120rpx; margin-bottom: 30rpx; }
@@ -20,21 +20,21 @@
   align-items: center;
   gap: 28rpx;
   padding: 28rpx 0;
-  border-bottom: 1rpx solid #F1F5F9;
+  border-bottom: 1rpx solid var(--border);
 }
 .feature-item:last-child { border-bottom: none; }
 .feature-icon { font-size: 60rpx; }
-.feature-title { font-size: 30rpx; font-weight: 600; color: #1E293B; }
-.feature-desc { font-size: 24rpx; color: #64748B; margin-top: 6rpx; }
+.feature-title { font-size: 30rpx; font-weight: 600; color: var(--text-primary); }
+.feature-desc { font-size: 24rpx; color: var(--text-secondary); margin-top: 6rpx; }
 
 .login-area { padding: 40rpx 48rpx; }
 .btn-wechat { font-size: 32rpx; letter-spacing: 2rpx; }
-.tip { text-align: center; font-size: 22rpx; color: #94A3B8; margin-top: 20rpx; }
+.tip { text-align: center; font-size: 22rpx; color: var(--text-muted); margin-top: 20rpx; }
 
 /* Team Select */
 .team-header { padding: 60rpx 48rpx 40rpx; text-align: center; }
-.team-title { font-size: 44rpx; font-weight: 800; color: #1E293B; }
-.team-subtitle { font-size: 26rpx; color: #64748B; margin-top: 12rpx; }
+.team-title { font-size: 44rpx; font-weight: 800; color: var(--text-primary); }
+.team-subtitle { font-size: 26rpx; color: var(--text-secondary); margin-top: 12rpx; }
 
 .team-grid {
   display: grid;
@@ -44,7 +44,7 @@
 }
 .team-item {
   position: relative;
-  background: #F8FAFC;
+  background: var(--bg-secondary);
   border: 3rpx solid transparent;
   border-radius: 20rpx;
   padding: 32rpx 24rpx;
@@ -53,13 +53,13 @@
   gap: 16rpx;
   transition: all 0.2s;
 }
-.team-item.selected { background: #EFF6FF; }
+.team-item.selected { background: var(--bg-tertiary); }
 .team-dot { width: 20rpx; height: 20rpx; border-radius: 50%; flex-shrink: 0; }
-.team-name { font-size: 28rpx; font-weight: 500; color: #1E293B; flex: 1; }
+.team-name { font-size: 28rpx; font-weight: 500; color: var(--text-primary); flex: 1; }
 .team-check {
   position: absolute; top: 12rpx; right: 12rpx;
   width: 32rpx; height: 32rpx;
-  background: #2563EB; color: white;
+  background: var(--primary); color: white;
   border-radius: 50%; font-size: 18rpx;
   display: flex; align-items: center; justify-content: center;
 }
