@@ -19,6 +19,23 @@ class PhotoController {
     }
   }
 
+  async uploadGeneral(req, res, next) {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+      const photo = await photoService.uploadGeneralImage(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype,
+        req.user.id
+      );
+
+      res.status(201).json({ success: true, data: { photo } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getActivityPhotos(req, res, next) {
     try {
       const photos = await photoService.getActivityPhotos(req.params.activityId, {

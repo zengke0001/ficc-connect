@@ -156,26 +156,15 @@ class AuthService {
     return result.rows;
   }
 
-  // PWA: Email/Password login
-  async login(email, password) {
+  // PWA: Email-only login (no password)
+  async login(email) {
     try {
       // Find user by email
       const result = await query('SELECT * FROM users WHERE email = $1', [email]);
       const user = result.rows[0];
 
       if (!user) {
-        throw new Error('Invalid email or password');
-      }
-
-      // For users created via WeChat, they may not have a password
-      if (!user.password_hash) {
-        throw new Error('Please use WeChat login or set a password');
-      }
-
-      // Verify password
-      const isValid = await bcrypt.compare(password, user.password_hash);
-      if (!isValid) {
-        throw new Error('Invalid email or password');
+        throw new Error('Email not registered. Please sign up first.');
       }
 
       // Update last active
@@ -198,10 +187,15 @@ class AuthService {
     }
   }
 
-  // PWA: Email/Password registration
+  // PWA: Email + Invite Code registration (no password)
   async register(userData) {
     try {
-      const { email, password, nickname, avatar_url } = userData;
+      const { email, invite_code, nickname, avatar_url } = userData;
+
+      // Verify invite code
+      if (invite_code !== process.env.INVITE_CODE) {
+        throw new Error('Invalid invite code');
+      }
 
       // Check if email already exists
       const existingResult = await query('SELECT id FROM users WHERE email = $1', [email]);
@@ -209,17 +203,14 @@ class AuthService {
         throw new Error('Email already registered');
       }
 
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 10);
-
       // Generate a unique openid for PWA users
       const pwaOpenid = `pwa_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
-      // Create user
+      // Create user (no password)
       const result = await query(
-        `INSERT INTO users (openid, email, password_hash, nickname, avatar_url)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [pwaOpenid, email, passwordHash, nickname || email.split('@')[0], avatar_url || '']
+        `INSERT INTO users (openid, email, nickname, avatar_url)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [pwaOpenid, email, nickname || email.split('@')[0], avatar_url || '']
       );
 
       const user = result.rows[0];

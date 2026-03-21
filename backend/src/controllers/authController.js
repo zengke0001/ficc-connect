@@ -40,34 +40,38 @@ class AuthController {
     }
   }
 
-  // PWA: Email/Password login
+  async getInviteCode(req, res, next) {
+    try {
+      res.json({ success: true, data: { invite_code: process.env.INVITE_CODE } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // PWA: Email-only login (no password)
   async login(req, res, next) {
     try {
-      const { email, password } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
       }
 
-      const result = await authService.login(email, password);
+      const result = await authService.login(email);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
   }
 
-  // PWA: Email/Password registration
+  // PWA: Email + Invite Code registration (no password)
   async register(req, res, next) {
     try {
-      const { email, password, nickname, avatar_url } = req.body;
-      if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required' });
+      const { email, invite_code, nickname, avatar_url } = req.body;
+      if (!email || !invite_code) {
+        return res.status(400).json({ error: 'Email and invite code are required' });
       }
 
-      if (password.length < 6) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters' });
-      }
-
-      const result = await authService.register({ email, password, nickname, avatar_url });
+      const result = await authService.register({ email, invite_code, nickname, avatar_url });
       res.status(201).json({ success: true, data: result });
     } catch (error) {
       next(error);

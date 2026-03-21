@@ -19,6 +19,7 @@ const optionalAuth = async (req, res, next) => {
 };
 
 router.post('/upload', auth, upload.single('photo'), photoController.upload.bind(photoController));
+router.post('/upload-general', auth, upload.single('photo'), photoController.uploadGeneral.bind(photoController));
 router.get('/activity/:activityId', optionalAuth, photoController.getActivityPhotos.bind(photoController));
 router.get('/gallery/:activityId', optionalAuth, photoController.getGallery.bind(photoController));
 router.post('/:id/like', auth, photoController.like.bind(photoController));

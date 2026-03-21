@@ -14,5 +14,6 @@ router.post('/register', authController.register.bind(authController));
 router.get('/profile', auth, authController.getProfile.bind(authController));
 router.put('/profile', auth, authController.updateProfile.bind(authController));
 router.get('/teams', authController.getTeams.bind(authController));
+router.get('/invite-code', auth, authController.getInviteCode.bind(authController));
 
 module.exports = router;

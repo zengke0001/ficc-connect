@@ -5,6 +5,63 @@ const storage = require('../config/storage');
 const logger = require('../utils/logger');
 
 class PhotoService {
+  async uploadGeneralImage(fileBuffer, originalname, mimetype, userId) {
+    try {
+      // Process image with Sharp
+      const image = sharp(fileBuffer);
+      const metadata = await image.metadata();
+
+      let processedBuffer = fileBuffer;
+      let width = metadata.width;
+      let height = metadata.height;
+
+      // Resize if too large
+      if (width > 1920 || height > 1920) {
+        const resized = await image
+          .resize(1920, 1920, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 85 })
+          .toBuffer();
+        processedBuffer = resized;
+        const newMeta = await sharp(resized).metadata();
+        width = newMeta.width;
+        height = newMeta.height;
+      }
+
+      // Generate thumbnail
+      const thumbnailBuffer = await sharp(fileBuffer)
+        .resize(400, 400, { fit: 'cover' })
+        .jpeg({ quality: 70 })
+        .toBuffer();
+
+      // Generate storage key
+      const key = storage.generateKey(originalname, userId);
+      const thumbnailKey = `thumbnails/${key}`;
+
+      // Upload both to cloud storage
+      const [photoUrl, thumbnailUrl] = await Promise.all([
+        storage.uploadFile(processedBuffer, key, 'image/jpeg', {
+          userId: userId.toString()
+        }),
+        storage.uploadFile(thumbnailBuffer, thumbnailKey, 'image/jpeg', {
+          userId: userId.toString(),
+          isThumb: 'true'
+        })
+      ]);
+
+      logger.info('General image uploaded successfully', { key, userId });
+
+      return {
+        url: photoUrl,
+        thumbnail_url: thumbnailUrl,
+        width,
+        height
+      };
+    } catch (error) {
+      logger.error('General image upload error', { error: error.message });
+      throw error;
+    }
+  }
+
   async uploadPhoto(fileBuffer, originalname, mimetype, { activityId, checkinId, userId }) {
     try {
       // Process image with Sharp

@@ -126,11 +126,18 @@ class CheckinService {
       SELECT 
         ap.activity_id,
         a.title,
+        a.description,
         a.cover_image_url,
+        a.start_date,
+        a.end_date,
+        a.status,
         CASE WHEN c.id IS NOT NULL THEN true ELSE false END as has_checkin,
         c.id as checkin_id,
         c.photo_url,
-        ap.current_streak
+        ap.current_streak,
+        ap.total_checkins,
+        ap.total_points,
+        (SELECT COUNT(*) FROM activity_participants WHERE activity_id = ap.activity_id) as participant_count
       FROM activity_participants ap
       JOIN activities a ON ap.activity_id = a.id
       LEFT JOIN checkins c ON c.activity_id = ap.activity_id 
