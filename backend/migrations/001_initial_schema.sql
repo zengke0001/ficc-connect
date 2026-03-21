@@ -156,14 +156,10 @@ CREATE INDEX idx_comments_activity ON comments(activity_id);
 
 -- Insert default teams
 INSERT INTO teams (name, color) VALUES 
-    ('产品部', '#2563EB'),
-    ('技术部', '#10B981'),
-    ('设计部', '#8B5CF6'),
-    ('运营部', '#F59E0B'),
-    ('市场部', '#EC4899'),
-    ('人力资源', '#06B6D4'),
-    ('财务部', '#6366F1'),
-    ('其他', '#6B7280');
+    ('FICC-Member', '#2563EB'),
+    ('Non-FICC', '#10B981'),
+    ('FICC-Connect', '#F59E0B'),
+    ('Others', '#6B7280');
 
 -- Insert default achievements
 INSERT INTO achievements (name, description, icon_url, condition_type, condition_value, points_reward) VALUES
