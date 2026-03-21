@@ -39,6 +39,40 @@ class AuthController {
       next(error);
     }
   }
+
+  // PWA: Email/Password login
+  async login(req, res, next) {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      const result = await authService.login(email, password);
+      res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // PWA: Email/Password registration
+  async register(req, res, next) {
+    try {
+      const { email, password, nickname, avatar_url } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      }
+
+      const result = await authService.register({ email, password, nickname, avatar_url });
+      res.status(201).json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AuthController();

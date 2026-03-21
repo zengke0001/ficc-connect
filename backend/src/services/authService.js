@@ -1,5 +1,6 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
 
@@ -155,8 +156,94 @@ class AuthService {
     return result.rows;
   }
 
+  // PWA: Email/Password login
+  async login(email, password) {
+    try {
+      // Find user by email
+      const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+      const user = result.rows[0];
+
+      if (!user) {
+        throw new Error('Invalid email or password');
+      }
+
+      // For users created via WeChat, they may not have a password
+      if (!user.password_hash) {
+        throw new Error('Please use WeChat login or set a password');
+      }
+
+      // Verify password
+      const isValid = await bcrypt.compare(password, user.password_hash);
+      if (!isValid) {
+        throw new Error('Invalid email or password');
+      }
+
+      // Update last active
+      await query('UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+
+      // Generate JWT
+      const token = jwt.sign(
+        { userId: user.id, openid: user.openid },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+
+      return {
+        token,
+        user: this.sanitizeUser(user)
+      };
+    } catch (error) {
+      logger.error('Login error', { error: error.message });
+      throw error;
+    }
+  }
+
+  // PWA: Email/Password registration
+  async register(userData) {
+    try {
+      const { email, password, nickname, avatar_url } = userData;
+
+      // Check if email already exists
+      const existingResult = await query('SELECT id FROM users WHERE email = $1', [email]);
+      if (existingResult.rows.length > 0) {
+        throw new Error('Email already registered');
+      }
+
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      // Generate a unique openid for PWA users
+      const pwaOpenid = `pwa_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
+      // Create user
+      const result = await query(
+        `INSERT INTO users (openid, email, password_hash, nickname, avatar_url)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [pwaOpenid, email, passwordHash, nickname || email.split('@')[0], avatar_url || '']
+      );
+
+      const user = result.rows[0];
+      logger.info('New PWA user created', { userId: user.id, email });
+
+      // Generate JWT
+      const token = jwt.sign(
+        { userId: user.id, openid: user.openid },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+
+      return {
+        token,
+        user: this.sanitizeUser(user)
+      };
+    } catch (error) {
+      logger.error('Registration error', { error: error.message });
+      throw error;
+    }
+  }
+
   sanitizeUser(user) {
-    const { openid, ...sanitized } = user;
+    const { openid, password_hash, ...sanitized } = user;
     return sanitized;
   }
 }

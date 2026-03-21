@@ -19,7 +19,8 @@ A fun, engaging WeChat mini-app that encourages employee participation in compan
 
 ### 1.4 Current Implementation Status
 - **Backend**: Core APIs implemented (auth, activities, check-ins, photos, likes)
-- **Mini-App**: 10 pages implemented with tab-based navigation
+- **Mini-App**: 10 pages implemented with tab-based navigation (WeChat platform)
+- **PWA App**: New web-based PWA for cross-platform deployment
 - **Features**: WeChat login, activity CRUD, check-in with photos, leaderboards, achievements
 
 ---
@@ -73,6 +74,7 @@ A fun, engaging WeChat mini-app that encourages employee participation in compan
 
 ### 2.2 Navigation Structure
 
+#### Mini-App Navigation
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  Tab Bar Navigation                                         │
@@ -85,8 +87,26 @@ A fun, engaging WeChat mini-app that encourages employee participation in compan
 └──────────────┴──────────────┴──────────────┴────────────────┘
 ```
 
+#### PWA Navigation
+```
+Mobile (Bottom Tabs):
+┌─────────────────────────────────────────┐
+│           Content Area                  │
+├──────────┬──────────┬──────────┬────────┤
+│   🏠     │    🎯    │    📸    │   👤   │
+│   Home   │ Activity │  Gallery │ Profile│
+└──────────┴──────────┴──────────┴────────┘
+
+Desktop (Top Nav):
+┌─────────────────────────────────────────┐
+│  Logo    Home  Activity  Gallery  Profile │
+├─────────────────────────────────────────┤
+│           Content Area                  │
+└─────────────────────────────────────────┘
+```
+
 **Sub-pages (non-tab):**
-- `onboarding` - WeChat login and team selection
+- `onboarding` - Login and team selection
 - `activity-detail` - Activity details, join/leave, check-in
 - `activity-gallery` - Photo gallery for specific activity
 - `checkin` - Check-in interface with photo upload
@@ -591,7 +611,8 @@ Gallery functionality is provided by `GET /api/photos/gallery/:activityId` endpo
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | WeChat Mini-App (WXML/WXSS/JS) |
+| Mini-App | WeChat Mini-App (WXML/WXSS/JS) |
+| PWA App | React + Vite + Tailwind CSS |
 | Backend | Node.js + Express |
 | Database | PostgreSQL |
 | Object Storage | Tencent COS / AWS S3 / Alibaba OSS (configurable) |
@@ -599,14 +620,29 @@ Gallery functionality is provided by `GET /api/photos/gallery/:activityId` endpo
 | Image Processing | Sharp |
 | Authentication | JWT tokens |
 
+### 8.1.1 PWA Tech Stack
+
+| Feature | Technology |
+|---------|------------|
+| Framework | React 18 |
+| Build Tool | Vite |
+| PWA Plugin | vite-plugin-pwa |
+| Routing | React Router |
+| Styling | Tailwind CSS |
+| Icons | Lucide React |
+| State | React hooks + Context |
+| HTTP Client | Fetch API |
+| Service Worker | Workbox (auto-generated) |
+
 ### 8.2 Storage Configuration
 The backend supports multiple cloud storage providers via environment variables:
 - `STORAGE_TYPE=coss` - Tencent COS
 - `STORAGE_TYPE=s3` - AWS S3
 - `STORAGE_TYPE=oss` - Alibaba OSS
 
-### 8.3 WeChat Integration
+### 8.3 Authentication Flows
 
+#### Mini-App (WeChat)
 ```javascript
 // Login flow
 wx.login({
@@ -626,6 +662,23 @@ wx.getUserProfile({
     // Send to backend for profile creation
   }
 })
+```
+
+#### PWA (Web)
+```javascript
+// Login flow
+const login = async (email, password) => {
+  const response = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const { token, user } = await response.json();
+  localStorage.setItem('token', token);
+  return user;
+};
+
+// Or use phone/OTP, OAuth providers
 ```
 
 **Development Mode:** When `NODE_ENV=development`, the backend bypasses WeChat API validation and generates fake openids from the login code. This allows local development without WeChat credentials.
@@ -813,4 +866,52 @@ miniapp/
 │   ├── request.js          # HTTP request wrapper
 │   └── util.js             # Helper functions
 └── images/                 # Tab icons & assets
+```
+
+### PWA Structure
+```
+pwa/
+├── public/
+│   ├── manifest.json       # PWA manifest
+│   ├── icon-192.png        # App icon (192x192)
+│   ├── icon-512.png        # App icon (512x512)
+│   └── favicon.ico
+├── src/
+│   ├── main.jsx            # Entry with PWA registration
+│   ├── App.jsx             # Root component with routing
+│   ├── components/
+│   │   ├── BottomNav.jsx   # Mobile bottom navigation
+│   │   ├── TopNav.jsx      # Desktop top navigation
+│   │   ├── ActivityCard.jsx
+│   │   ├── PhotoGrid.jsx
+│   │   ├── Avatar.jsx
+│   │   ├── OfflineIndicator.jsx
+│   │   └── InstallPrompt.jsx
+│   ├── pages/
+│   │   ├── Home.jsx        # Today's activities
+│   │   ├── Activities.jsx  # Browse & create
+│   │   ├── Gallery.jsx     # Photo galleries
+│   │   ├── Profile.jsx     # Stats & settings
+│   │   ├── Login.jsx       # Login page
+│   │   ├── ActivityDetail.jsx
+│   │   ├── ActivityGallery.jsx
+│   │   ├── Checkin.jsx
+│   │   ├── CreateActivity.jsx
+│   │   └── Leaderboard.jsx
+│   ├── hooks/
+│   │   ├── useAuth.js      # Authentication hook
+│   │   ├── useMediaQuery.js # Responsive hook
+│   │   └── useInstallPrompt.js
+│   ├── contexts/
+│   │   └── AuthContext.jsx # Global auth state
+│   ├── utils/
+│   │   ├── api.js          # API client
+│   │   └── helpers.js
+│   └── styles/
+│       └── index.css       # Tailwind imports
+├── index.html
+├── vite.config.js          # Vite + PWA config
+├── tailwind.config.js
+├── package.json
+└── README.md
 ```
