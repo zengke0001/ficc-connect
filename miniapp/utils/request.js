@@ -4,6 +4,9 @@ const request = (url, options = {}) => {
   const app = getApp();
   const token = wx.getStorageSync('token');
   const baseUrl = app.globalData.baseUrl;
+  
+  console.log('Making request to:', `${baseUrl}${url}`);
+  console.log('Request options:', options);
 
   return new Promise((resolve, reject) => {
     wx.request({
@@ -16,6 +19,9 @@ const request = (url, options = {}) => {
         ...options.headers
       },
       success: (res) => {
+        console.log('Response status:', res.statusCode);
+        console.log('Response data:', res.data);
+        
         if (res.statusCode === 401) {
           // Token expired, redirect to onboarding
           app.clearAuth();
@@ -30,6 +36,7 @@ const request = (url, options = {}) => {
         }
       },
       fail: (err) => {
+        console.error('Request failed:', err);
         reject(new Error(err.errMsg || 'Network error'));
       }
     });

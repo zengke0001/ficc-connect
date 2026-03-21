@@ -5,7 +5,9 @@ const { showToast, showLoading, hideLoading } = require('../../utils/util');
 Page({
   data: {
     loading: false,
-    step: 0  // 0=welcome, 1=team-select
+    step: 0,  // 0=welcome, 1=team-select
+    avatarUrl: '',
+    nickname: ''
   },
 
   onLoad() {
@@ -15,30 +17,53 @@ Page({
     }
   },
 
+  onChooseAvatar(e) {
+    const { avatarUrl } = e.detail;
+    console.log('Chosen avatar:', avatarUrl);
+    this.setData({ avatarUrl });
+  },
+
+  onNicknameInput(e) {
+    this.setData({ nickname: e.detail.value });
+  },
+
+  onNicknameBlur(e) {
+    console.log('Nickname:', e.detail.value);
+  },
+
   async handleLogin() {
     if (this.data.loading) return;
     
+    const { avatarUrl, nickname } = this.data;
+    
+    if (!avatarUrl) {
+      showToast('Please select an avatar');
+      return;
+    }
+    
     try {
-      // Step 1: Get user profile FIRST (must be called directly from tap)
-      const profileRes = await new Promise((resolve, reject) => {
-        wx.getUserProfile({
-          desc: 'To display your avatar and nickname',
-          success: resolve,
-          fail: reject
-        });
-      });
-
-      const { nickName, avatarUrl } = profileRes.userInfo;
-
-      // Step 2: Get WeChat login code
+      // Get WeChat login code
       const loginRes = await new Promise((resolve, reject) => {
         wx.login({ success: resolve, fail: reject });
       });
+      
+      console.log('Got WeChat code:', loginRes.code);
 
       showLoading('Logging in...');
 
-      // Step 3: Login with backend
-      const result = await authAPI.wechatLogin(loginRes.code, nickName, avatarUrl);
+      // Use provided nickname or generate a default one
+      const finalNickname = nickname && nickname.trim() 
+        ? nickname.trim() 
+        : 'User_' + Math.random().toString(36).substring(2, 8);
+      
+      console.log('Calling authAPI.wechatLogin with:', { 
+        code: loginRes.code, 
+        nickname: finalNickname, 
+        avatarUrl 
+      });
+      
+      const result = await authAPI.wechatLogin(loginRes.code, finalNickname, avatarUrl);
+      console.log('Backend response:', result);
 
       const app = getApp();
       app.setToken(result.data.token);
@@ -55,9 +80,9 @@ Page({
       }
     } catch (error) {
       console.error('Login error:', error);
-      if (error.message !== 'cancel') {
-        showToast('Login failed, please try again');
-      }
+      hideLoading();
+      this.setData({ loading: false });
+      showToast('Login failed: ' + (error.message || 'Unknown error'));
     }
   },
 
@@ -72,7 +97,7 @@ Page({
 
   async confirmTeam() {
     if (!this.data.selectedTeamId) {
-      showToast('Please select your department');
+      showToast('Please select your team');
       return;
     }
 

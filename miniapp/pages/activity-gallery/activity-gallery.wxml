@@ -3,7 +3,7 @@
 
   <!-- Activity info header -->
   <view class="activity-header" wx:if="{{activity}}">
-    <image class="header-cover" src="{{activity.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+    <image class="header-cover" src="{{activity.cover_image_url || '/images/default-cover.jpg'}}" mode="aspectFill"/>
     <view class="header-overlay">
       <view class="header-title">{{activity.title}}</view>
       <view class="header-dates">{{activity.start_date}} ~ {{activity.end_date}}</view>

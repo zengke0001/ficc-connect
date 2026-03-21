@@ -43,7 +43,7 @@
 
     <!-- Activity header -->
     <view class="act-header" wx:if="{{activity}}">
-      <image class="act-cover-img" src="{{activity.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+      <image class="act-cover-img" src="{{activity.cover_image_url || '/images/default-cover.jpg'}}" mode="aspectFill"/>
       <view class="act-overlay">
         <view class="act-name">{{activity.title}}</view>
         <view class="act-date">Today - keep it up!</view>

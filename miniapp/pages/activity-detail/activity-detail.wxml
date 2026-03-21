@@ -8,7 +8,7 @@
 
     <!-- Cover image -->
     <view class="cover-wrap">
-      <image class="cover-img" src="{{activity.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+      <image class="cover-img" src="{{activity.cover_image_url || '/images/default-cover.jpg'}}" mode="aspectFill"/>
       <view class="cover-overlay">
         <view class="cover-title">{{activity.title}}</view>
         <view class="cover-date">

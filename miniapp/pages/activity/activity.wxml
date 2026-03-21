@@ -24,7 +24,7 @@
       <view wx:for="{{activities}}" wx:key="id"
             class="activity-card card fade-in"
             bindtap="goToDetail" data-id="{{item.id}}">
-        <image class="card-cover" src="{{item.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+        <image class="card-cover" src="{{item.cover_image_url || '/images/default-cover.jpg'}}" mode="aspectFill"/>
         <view class="card-content">
           <view class="card-header">
             <view class="card-title">{{item.title}}</view>

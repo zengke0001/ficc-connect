@@ -37,7 +37,7 @@
     <block wx:elif="{{todayActivities.length > 0}}">
       <view wx:for="{{todayActivities}}" wx:key="activity_id" class="activity-row card fade-in"
             bindtap="goToActivityDetail" data-id="{{item.activity_id}}">
-        <image class="act-cover" src="{{item.cover_image_url || '/images/default-cover.png'}}" mode="aspectFill"/>
+        <image class="act-cover" src="{{item.cover_image_url || '/images/default-cover.jpg'}}" mode="aspectFill"/>
         <view class="act-info">
           <view class="act-title">{{item.title}}</view>
           <view class="act-meta">

@@ -8,11 +8,11 @@ class AuthService {
     try {
       let openid;
 
-      // Development mode: use fake openid for testing
+      // Development mode: use consistent test openid
       if (process.env.NODE_ENV === 'development') {
-        logger.info('Development mode: using test openid');
-        // Use the code as part of openid so different test codes work consistently
-        openid = `dev_openid_${code.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}`;
+        logger.info('Development mode: using consistent test openid');
+        // Use a fixed test openid so the same "user" logs in each time
+        openid = 'dev_test_openid_001';
       } else {
         // Production: exchange code with WeChat API
         const response = await axios.get('https://api.weixin.qq.com/sns/jscode2session', {
@@ -32,7 +32,7 @@ class AuthService {
         openid = wxOpenid;
       }
 
-      // Check if user exists
+      // Check if user exists by openid
       let userResult = await query('SELECT * FROM users WHERE openid = $1', [openid]);
       let user = userResult.rows[0];
       let isNewUser = false;
@@ -42,15 +42,18 @@ class AuthService {
         isNewUser = true;
         userResult = await query(
           'INSERT INTO users (openid, nickname, avatar_url) VALUES ($1, $2, $3) RETURNING *',
-          [openid, nickname || '微信用户', avatarUrl || '']
+          [openid, nickname || 'User', avatarUrl || '']
         );
         user = userResult.rows[0];
         logger.info('New user created', { userId: user.id, openid });
-      } else if (nickname || avatarUrl) {
-        // Update profile if provided during login
-        await this.updateProfile(user.id, { nickname, avatar_url: avatarUrl });
-        userResult = await query('SELECT * FROM users WHERE id = $1', [user.id]);
-        user = userResult.rows[0];
+      } else {
+        // Existing user - only update avatar if provided, keep existing nickname
+        logger.info('Existing user found', { userId: user.id, openid });
+        if (avatarUrl && avatarUrl !== user.avatar_url) {
+          await this.updateProfile(user.id, { avatar_url: avatarUrl });
+          userResult = await query('SELECT * FROM users WHERE id = $1', [user.id]);
+          user = userResult.rows[0];
+        }
       }
 
       // Update last active

@@ -7,7 +7,7 @@ A fun, engaging WeChat mini-app that encourages employee participation in compan
 
 ### 1.2 Core Value Proposition
 - **Easy Check-in**: One-tap打卡 with optional photo upload
-- **Social Engagement**: Like, share, and cheer for colleagues
+- **Social Engagement**: Like photos from colleagues
 - **Friendly Competition**: Rankings and achievements drive participation
 - **Memory Preservation**: Photo galleries for completed activities
 - **Team Building**: Discover activities and connect with colleagues
@@ -17,6 +17,11 @@ A fun, engaging WeChat mini-app that encourages employee participation in compan
 - Activity organizers creating challenges
 - Visitors browsing and supporting participants
 
+### 1.4 Current Implementation Status
+- **Backend**: Core APIs implemented (auth, activities, check-ins, photos, likes)
+- **Mini-App**: 10 pages implemented with tab-based navigation
+- **Features**: WeChat login, activity CRUD, check-in with photos, leaderboards, achievements
+
 ---
 
 ## 2. Features & Requirements
@@ -24,44 +29,47 @@ A fun, engaging WeChat mini-app that encourages employee participation in compan
 ### 2.1 Core Features
 
 #### User Management
-- [ ] WeChat auto-login (capture avatar, nickname)
-- [ ] Team/Department selection during onboarding
-- [ ] User profile with activity history
-- [ ] Personal stats and achievements
+- [x] WeChat auto-login (capture avatar, nickname)
+- [x] Team/Department selection during onboarding
+- [x] User profile with stats
+- [x] Personal achievements display
+- [x] Nickname editing
 
 #### Activity Management
-- [ ] Create new activity (title, description, duration, rules)
-- [ ] Browse active activities
-- [ ] Join/Leave activity
-- [ ] Archive completed activities
-- [ ] Activity detail page with participants
+- [x] Create new activity (title, description, duration, cover image)
+- [x] Browse active and archived activities
+- [x] Join/Leave activity
+- [x] Auto-archive completed activities (backend)
+- [x] Activity detail page with participants and leaderboard
 
 #### Check-in System (打卡)
-- [ ] One-tap check-in button
-- [ ] Optional photo upload with check-in
-- [ ] Daily check-in tracking
-- [ ] Check-in streak counter
-- [ ] Location verification (optional)
-- [ ] Check-in reminders/notifications
+- [x] One-tap check-in button
+- [x] Optional photo upload with check-in
+- [x] Daily check-in tracking
+- [x] Check-in streak counter
+- [x] Today's check-in status on home page
+- [ ] Location verification (optional) - NOT IMPLEMENTED
+- [ ] Check-in reminders/notifications - NOT IMPLEMENTED
 
 #### Social Features
-- [ ] Like photos and check-ins
-- [ ] Comment on activity posts
-- [ ] Share activity to WeChat moments
-- [ ] Follow participants
+- [x] Like photos
+- [ ] Comment on activity posts - NOT IMPLEMENTED
+- [ ] Share activity to WeChat moments - NOT IMPLEMENTED
+- [ ] Follow participants - NOT IMPLEMENTED
 
 #### Gamification
-- [ ] Leaderboard (daily, weekly, overall)
-- [ ] Points system for check-ins and engagement
-- [ ] Achievement badges
-- [ ] Team rankings
-- [ ] Winner announcements
+- [x] Leaderboard (overall)
+- [ ] Leaderboard (daily, weekly) - NOT IMPLEMENTED
+- [x] Points system for check-ins and engagement
+- [x] Achievement badges (8 default achievements)
+- [ ] Team rankings - NOT IMPLEMENTED
+- [ ] Winner announcements - NOT IMPLEMENTED
 
 #### Photo Gallery
-- [ ] Activity photo gallery
-- [ ] Personal photo collection
-- [ ] Photo grid view with likes
-- [ ] Download/share photos
+- [x] Activity photo gallery
+- [x] Photo grid view with likes
+- [ ] Personal photo collection - NOT IMPLEMENTED
+- [ ] Download/share photos - NOT IMPLEMENTED
 
 ### 2.2 Navigation Structure
 
@@ -71,11 +79,19 @@ A fun, engaging WeChat mini-app that encourages employee participation in compan
 ├──────────────┬──────────────┬──────────────┬────────────────┤
 │   🏠 Home    │  🎯 Activity │  📸 Gallery  │   👤 Profile   │
 │              │              │              │                │
-│  - My Acts   │  - Discover  │  - My Photos │  - My Stats    │
-│  - Archived  │  - Create    │  - Activity  │  - Settings    │
-│              │              │   Galleries  │  - Teams       │
+│  - My Acts   │  - Discover  │  - Activity  │  - My Stats    │
+│  - Archived  │  - Create    │   Galleries  │  - Achievements│
+│              │              │              │  - Settings    │
 └──────────────┴──────────────┴──────────────┴────────────────┘
 ```
+
+**Sub-pages (non-tab):**
+- `onboarding` - WeChat login and team selection
+- `activity-detail` - Activity details, join/leave, check-in
+- `activity-gallery` - Photo gallery for specific activity
+- `checkin` - Check-in interface with photo upload
+- `create-activity` - Form to create new activity
+- `leaderboard` - Activity rankings
 
 ---
 
@@ -290,97 +306,97 @@ CREATE INDEX idx_activity_participants_points ON activity_participants(total_poi
 ### 5.1 Authentication
 ```
 POST /api/auth/wechat
-  - Body: { code }  // WeChat login code
-  - Response: { token, user }
+  - Body: { code, nickname, avatar_url }
+  - Response: { success: true, data: { token, user } }
 
 GET /api/auth/profile
   - Auth required
-  - Response: { user, stats, achievements }
+  - Response: { success: true, data: { user, stats, achievements } }
 
 PUT /api/auth/profile
   - Auth required
   - Body: { team_id, nickname }
-  - Response: { user }
+  - Response: { success: true, data: { user } }
+
+GET /api/auth/teams
+  - Response: { success: true, data: { teams } }
 ```
 
 ### 5.2 Activities
 ```
 GET /api/activities
   - Query: { status, page, limit, my_activities }
-  - Response: { activities[], total }
+  - Response: { success: true, data: { activities[], total } }
 
 GET /api/activities/:id
-  - Auth optional
-  - Response: { activity, participants[], leaderboard[], is_joined }
+  - Auth optional (attaches is_joined if authenticated)
+  - Response: { success: true, data: { activity, participants[], leaderboard[], is_joined } }
 
 POST /api/activities
   - Auth required
-  - Body: { title, description, cover_image, start_date, end_date, rules }
-  - Response: { activity }
+  - Body: { title, description, cover_image_url, start_date, end_date, ... }
+  - Response: { success: true, data: { activity } }
 
 POST /api/activities/:id/join
   - Auth required
-  - Response: { participant }
+  - Response: { success: true, data: { participant } }
 
 POST /api/activities/:id/leave
   - Auth required
-  - Response: { success }
+  - Response: { success: true, data: { success } }
 
 GET /api/activities/:id/leaderboard
-  - Query: { type: 'daily' | 'weekly' | 'overall' }
-  - Response: { rankings[] }
+  - Query: { type, limit }
+  - Response: { success: true, data: { rankings[] } }
+
+GET /api/activities/today
+  - Auth required
+  - Response: { success: true, data: { activities: [{ activity_id, has_checkin, current_streak, ... }] } }
 ```
 
 ### 5.3 Check-ins
 ```
 POST /api/activities/:id/checkin
   - Auth required
-  - Body: { photo?, comment?, location? }
-  - Response: { checkin, points_earned, streak, achievements[] }
+  - Body: { photo_url?, comment? }
+  - Response: { success: true, data: { checkin, points_earned, streak, achievements[], new_achievements[] } }
 
 GET /api/activities/:id/checkins
   - Query: { date, user_id, page, limit }
-  - Response: { checkins[] }
-
-GET /api/checkins/today
-  - Auth required
-  - Response: { activities: [{ activity_id, has_checkin }] }
+  - Response: { success: true, data: { checkins[] } }
 ```
 
 ### 5.4 Photos
 ```
 POST /api/photos/upload
   - Auth required
-  - Body: multipart/form-data { file, activity_id, checkin_id? }
-  - Response: { photo, url }
+  - Body: multipart/form-data { photo, activityId, checkinId? }
+  - Response: { success: true, data: { photo } }
 
-GET /api/activities/:id/photos
+GET /api/photos/activity/:activityId
+  - Auth optional
   - Query: { page, limit, user_id }
-  - Response: { photos[] }
+  - Response: { success: true, data: { photos[] } }
 
-GET /api/users/:id/photos
-  - Query: { page, limit }
-  - Response: { photos[] }
+GET /api/photos/gallery/:activityId
+  - Auth optional
+  - Response: { success: true, data: { photos[], winners[], stats } }
 
 POST /api/photos/:id/like
   - Auth required
-  - Response: { likes_count }
+  - Response: { success: true, data: { likes_count, is_liked } }
 
 DELETE /api/photos/:id/like
   - Auth required
-  - Response: { likes_count }
+  - Response: { success: true, data: { likes_count, is_liked } }
 ```
 
-### 5.5 Gallery
-```
-GET /api/galleries/activities/:id
-  - Query: { page, limit }
-  - Response: { photos[], winners[], stats }
+### 5.5 Gallery (Merged into Photos API)
+Gallery functionality is provided by `GET /api/photos/gallery/:activityId` endpoint.
 
-GET /api/galleries/archived
-  - Query: { page, limit, year, month }
-  - Response: { activities[] }
-```
+**Note:** The following endpoints are NOT implemented:
+- `GET /api/galleries/archived` - Use `GET /api/activities?status=completed` instead
+- `GET /api/users/:id/photos` - Personal photo collection not implemented
 
 ---
 
@@ -406,15 +422,16 @@ GET /api/galleries/archived
 
 ### 6.2 Color Palette
 
+**Actual Implementation (Orange/Coral Theme):**
 ```css
-/* Primary: Ocean Breeze - Professional yet energetic */
---primary: #2563EB;        /* Main actions, buttons */
---primary-light: #60A5FA;  /* Hover states */
---primary-dark: #1D4ED8;   /* Active states */
+/* Primary: Coral/Orange - Energetic and warm */
+--primary: #FF6B35;        /* Navigation bar, primary buttons */
+--primary-light: #FF8A5B;  /* Hover states */
+--primary-dark: #E55A2B;   /* Active states */
 
-/* Accent: Sunset - Fun elements */
---accent: #F59E0B;         /* Points, streaks, highlights */
---accent-light: #FBBF24;   /* Badges, achievements */
+/* Accent: Gold/Yellow - Points and achievements */
+--accent: #FFD700;         /* Points, streaks, highlights */
+--accent-light: #FFE44D;   /* Badges, achievements */
 
 /* Success: Green */
 --success: #10B981;        /* Check-in success */
@@ -422,13 +439,13 @@ GET /api/galleries/archived
 
 /* Backgrounds */
 --bg-primary: #FFFFFF;
---bg-secondary: #F8FAFC;
---bg-tertiary: #F1F5F9;
+--bg-secondary: #FFF8F5;   /* Warm off-white */
+--bg-tertiary: #F5F5F5;
 
 /* Text */
---text-primary: #1E293B;
---text-secondary: #64748B;
---text-muted: #94A3B8;
+--text-primary: #1A1A1A;
+--text-secondary: #666666;
+--text-muted: #999999;
 ```
 
 ### 6.3 Key Screens
@@ -577,23 +594,31 @@ GET /api/galleries/archived
 | Frontend | WeChat Mini-App (WXML/WXSS/JS) |
 | Backend | Node.js + Express |
 | Database | PostgreSQL |
-| Object Storage | Tencent COS (recommended) |
-| Cache | Redis (optional, for leaderboards) |
+| Object Storage | Tencent COS / AWS S3 / Alibaba OSS (configurable) |
+| Cache | Redis (optional, for leaderboards) - NOT IMPLEMENTED |
 | Image Processing | Sharp |
+| Authentication | JWT tokens |
 
-### 8.2 WeChat Integration
+### 8.2 Storage Configuration
+The backend supports multiple cloud storage providers via environment variables:
+- `STORAGE_TYPE=coss` - Tencent COS
+- `STORAGE_TYPE=s3` - AWS S3
+- `STORAGE_TYPE=oss` - Alibaba OSS
+
+### 8.3 WeChat Integration
 
 ```javascript
 // Login flow
 wx.login({
   success: (res) => {
     // Send code to backend
-    // Backend exchanges for openid/session_key
+    // Backend exchanges for openid/session_key (production)
+    // Or generates fake openid (development mode)
     // Returns JWT token
   }
 })
 
-// Get user profile
+// Get user profile (using wx.getUserProfile or getUserInfo)
 wx.getUserProfile({
   desc: '用于完善用户资料',
   success: (res) => {
@@ -603,53 +628,76 @@ wx.getUserProfile({
 })
 ```
 
-### 8.3 Photo Upload Flow
+**Development Mode:** When `NODE_ENV=development`, the backend bypasses WeChat API validation and generates fake openids from the login code. This allows local development without WeChat credentials.
+
+### 8.4 Photo Upload Flow
 
 ```
 1. User selects/takes photo
    ↓
 2. Mini-app compresses image (wx.compressImage)
    ↓
-3. Upload to backend
+3. Upload to backend via uploadFile
    ↓
 4. Backend processes with Sharp
    - Resize if needed
    - Generate thumbnail
    ↓
-5. Upload to Tencent COS
+5. Upload to configured cloud storage (COS/S3/OSS)
    ↓
 6. Save metadata to PostgreSQL
    ↓
 7. Return photo URL to mini-app
 ```
 
+**API Client Pattern:**
+```javascript
+// utils/api.js
+const photoAPI = {
+  upload: (filePath, activityId, checkinId) =>
+    uploadFile('/api/photos/upload', filePath, { activityId, checkinId })
+};
+```
+
 ---
 
-## 9. Development Phases
+## 9. Development Status
 
-### Phase 1: MVP (Week 1-2)
-- [ ] User login with WeChat
-- [ ] Basic activity CRUD
-- [ ] Simple check-in (no photo)
-- [ ] Basic leaderboard
+### Implemented (Current)
+- [x] User login with WeChat (with dev mode)
+- [x] Team selection during onboarding
+- [x] Activity CRUD (create, list, join, leave)
+- [x] Check-in with optional photo
+- [x] Photo upload and gallery
+- [x] Like system for photos
+- [x] Leaderboard (overall)
+- [x] Achievement system (8 default badges)
+- [x] Archived activities view
+- [x] Today's check-in status
+- [x] User profile with stats
 
-### Phase 2: Core Features (Week 3-4)
-- [ ] Photo upload
-- [ ] Like system
-- [ ] Achievements
-- [ ] Team management
-
-### Phase 3: Polish (Week 5-6)
-- [ ] Photo galleries
-- [ ] Archived activities
-- [ ] Animations & micro-interactions
-- [ ] Performance optimization
-
-### Phase 4: Advanced (Week 7-8)
-- [ ] Comments
+### Not Implemented
+- [ ] Comments on activities/photos
+- [ ] Daily/weekly leaderboard filters
+- [ ] Team rankings
 - [ ] Push notifications
+- [ ] Location verification for check-ins
+- [ ] Share to WeChat moments
+- [ ] Personal photo collection
+- [ ] Photo download/share
 - [ ] Analytics dashboard
 - [ ] Admin features
+- [ ] Redis caching for leaderboards
+
+### Future Enhancements (Original)
+- [ ] Live activity streaming
+- [ ] Video check-ins
+- [ ] AI photo categorization
+- [ ] Integration with fitness trackers
+- [ ] Company-wide challenges
+- [ ] Reward system integration
+- [ ] Multi-language support
+- [ ] Dark mode
 
 ---
 
@@ -691,6 +739,78 @@ wx.getUserProfile({
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-03-19  
-**Status:** Ready for Development
+**Document Version:** 1.1  
+**Last Updated:** 2025-03-21  
+**Status:** MVP Implemented - Core Features Complete
+
+---
+
+## Appendix: Project File Structure
+
+### Backend Structure
+```
+backend/
+├── server.js                 # Entry point
+├── src/
+│   ├── app.js               # Express app setup
+│   ├── config/
+│   │   ├── database.js      # PostgreSQL pool config
+│   │   ├── storage.js       # Storage factory
+│   │   ├── storage-cos.js   # Tencent COS implementation
+│   │   ├── storage-s3.js    # AWS S3 implementation
+│   │   └── storage-oss.js   # Alibaba OSS implementation
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── activityController.js
+│   │   └── photoController.js
+│   ├── services/
+│   │   ├── authService.js
+│   │   ├── activityService.js
+│   │   ├── checkinService.js
+│   │   └── photoService.js
+│   ├── routes/
+│   │   ├── index.js
+│   │   ├── authRoutes.js
+│   │   ├── activityRoutes.js
+│   │   └── photoRoutes.js
+│   ├── middleware/
+│   │   ├── auth.js          # JWT verification
+│   │   ├── errorHandler.js
+│   │   └── upload.js        # Multer config
+│   ├── repositories/
+│   │   └── baseRepository.js
+│   └── utils/
+│       └── logger.js        # Winston logger
+└── migrations/
+    ├── 001_initial_schema.sql
+    └── run.js
+```
+
+### Mini-App Structure
+```
+miniapp/
+├── app.js                   # App lifecycle & global data
+├── app.json                 # Page routes & tab config
+├── app.wxss                 # Global styles
+├── pages/
+│   ├── home/               # Home tab - today's activities
+│   ├── activity/           # Activity tab - browse & create
+│   ├── gallery/            # Gallery tab - activity galleries
+│   ├── profile/            # Profile tab - stats & settings
+│   ├── onboarding/         # Login & team selection
+│   ├── activity-detail/    # Activity details & join
+│   ├── activity-gallery/   # Photo gallery for activity
+│   ├── checkin/            # Check-in interface
+│   ├── create-activity/    # Create activity form
+│   └── leaderboard/        # Activity rankings
+├── components/
+│   ├── activity-card/      # Activity list item
+│   ├── avatar/             # User avatar display
+│   ├── checkin-btn/        # Check-in button
+│   └── photo-grid/         # Photo grid display
+├── utils/
+│   ├── api.js              # API client methods
+│   ├── request.js          # HTTP request wrapper
+│   └── util.js             # Helper functions
+└── images/                 # Tab icons & assets
+```

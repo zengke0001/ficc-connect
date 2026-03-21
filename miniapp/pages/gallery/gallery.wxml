@@ -22,7 +22,7 @@
       data-id="{{item.id}}">
       <image 
         class="card-cover" 
-        src="{{item.cover_image_url || '/images/default-cover.png'}}" 
+        src="{{item.cover_image_url || '/images/default-cover.jpg'}}" 
         mode="aspectFill"/>
       <view class="card-content">
         <view class="card-title">{{item.title}}</view>

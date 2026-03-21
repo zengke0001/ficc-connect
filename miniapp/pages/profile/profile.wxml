@@ -51,6 +51,13 @@
 
   <!-- Settings list -->
   <view class="settings-section card">
+    <view class="settings-item" bindtap="editNickname">
+      <text class="settings-icon">✏️</text>
+      <text class="settings-label">Edit Nickname</text>
+      <text class="settings-value">{{user.nickname}}</text>
+      <text class="settings-arrow">›</text>
+    </view>
+    <view class="settings-divider"></view>
     <view class="settings-item" bindtap="goToArchived">
       <text class="settings-icon">📂</text>
       <text class="settings-label">Archived Activities</text>
@@ -66,3 +73,26 @@
 
   <view style="height: 60rpx;"></view>
 </scroll-view>
+
+<!-- Edit Nickname Modal -->
+<view class="modal-overlay" wx:if="{{showNicknameModal}}" bindtap="closeNicknameModal">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">Edit Nickname</text>
+      <view class="modal-close" bindtap="closeNicknameModal">✕</view>
+    </view>
+    <view class="modal-body">
+      <input class="nickname-edit-input" 
+             type="nickname"
+             placeholder="Enter your nickname"
+             value="{{editNickname}}"
+             bindinput="onEditNicknameInput"
+             focus="{{showNicknameModal}}"/>
+      <view class="nickname-hint">Tap to use your WeChat nickname</view>
+    </view>
+    <view class="modal-footer">
+      <button class="btn btn-secondary" bindtap="closeNicknameModal">Cancel</button>
+      <button class="btn btn-primary" bindtap="saveNickname">Save</button>
+    </view>
+  </view>
+</view>

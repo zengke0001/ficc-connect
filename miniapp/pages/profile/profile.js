@@ -7,7 +7,9 @@ Page({
     user: null,
     stats: null,
     achievements: [],
-    loading: true
+    loading: true,
+    showNicknameModal: false,
+    editNickname: ''
   },
 
   onShow() {
@@ -43,6 +45,50 @@ Page({
       // In a real app, upload the avatar image here
       showToast('Avatar update coming soon');
     } catch (e) { }
+  },
+
+  editNickname() {
+    this.setData({ 
+      showNicknameModal: true,
+      editNickname: this.data.user?.nickname || ''
+    });
+  },
+
+  closeNicknameModal() {
+    this.setData({ showNicknameModal: false });
+  },
+
+  onEditNicknameInput(e) {
+    this.setData({ editNickname: e.detail.value });
+  },
+
+  async saveNickname() {
+    const { editNickname } = this.data;
+    
+    if (!editNickname || !editNickname.trim()) {
+      showToast('Please enter a nickname');
+      return;
+    }
+
+    showLoading('Saving...');
+    try {
+      await authAPI.updateProfile({ nickname: editNickname.trim() });
+      const profile = await authAPI.getProfile();
+      
+      this.setData({
+        user: profile.data.user,
+        showNicknameModal: false
+      });
+      
+      // Update global data
+      getApp().setUserInfo(profile.data.user);
+      
+      hideLoading();
+      showToast('Nickname updated!');
+    } catch (e) {
+      hideLoading();
+      showToast('Failed to save');
+    }
   },
 
   async logout() {
