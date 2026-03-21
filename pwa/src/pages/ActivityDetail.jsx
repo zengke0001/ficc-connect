@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { activityAPI } from '../utils/api';
+import { PhotoGrid } from '../components/PhotoGrid';
 import {
   ArrowLeft, Calendar, Users, Trophy, Flame,
-  CheckCircle, LogOut, Camera, Loader2
+  CheckCircle, LogOut, Camera, Loader2, Image as ImageIcon
 } from 'lucide-react';
 import { formatDateRange, daysRemaining, getInitials, getAvatarColor } from '../utils/helpers';
 
@@ -13,6 +14,7 @@ export function ActivityDetail() {
   const [activity, setActivity] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [recentPhotos, setRecentPhotos] = useState([]);
   const [isJoined, setIsJoined] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -27,6 +29,7 @@ export function ActivityDetail() {
       setActivity(result.data.activity);
       setParticipants(result.data.participants || []);
       setLeaderboard(result.data.leaderboard || []);
+      setRecentPhotos(result.data.recentPhotos || []);
       setIsJoined(result.data.is_joined);
     } catch (error) {
       console.error('Failed to load activity:', error);
@@ -141,6 +144,39 @@ export function ActivityDetail() {
             {activity.description || 'No description provided.'}
           </p>
         </div>
+
+        {/* Recent Photos */}
+        {recentPhotos.length > 0 && (
+          <div className="card p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-primary" />
+                Photos
+              </h3>
+              <Link
+                to={`/gallery/${id}`}
+                className="text-sm text-primary font-medium"
+              >
+                View all
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {recentPhotos.slice(0, 6).map((photo) => (
+                <div
+                  key={photo.id}
+                  className="aspect-square rounded-lg overflow-hidden bg-gray-100"
+                >
+                  <img
+                    src={photo.url}
+                    alt="Activity photo"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Leaderboard Preview */}
         {leaderboard.length > 0 && (
