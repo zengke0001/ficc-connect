@@ -30,8 +30,10 @@ cleanup() {
     echo -e "${GREEN}PostgreSQL stopped${NC}"
 }
 
-# Set trap to cleanup on Ctrl+C
-trap cleanup SIGINT SIGTERM
+# Set trap to cleanup on Ctrl+C (skip if running with nohup)
+if [ -t 0 ]; then
+    trap cleanup SIGINT SIGTERM
+fi
 
 # Start PostgreSQL
 echo ""
