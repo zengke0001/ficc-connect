@@ -133,3 +133,5 @@ public/uploads/
 *.iml
 *.ipr
 *.iws
+server.log
+backend/nul
