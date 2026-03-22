@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/ficc-connect/',
   plugins: [
     react(),
     VitePWA({
@@ -14,11 +15,11 @@ export default defineConfig({
         theme_color: '#FF6B35',
         background_color: '#FFF8F5',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/ficc-connect/',
+        start_url: '/ficc-connect/',
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+          { src: '/ficc-connect/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/ficc-connect/icon-512.png', sizes: '512x512', type: 'image/png' }
         ]
       },
       workbox: {

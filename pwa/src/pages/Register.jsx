@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Flame, Mail, User, KeyRound, AlertCircle, Loader2 } from 'lucide-react';
 
 export function Register() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -13,6 +14,14 @@ export function Register() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Auto-fill invite code from URL parameter
+  useEffect(() => {
+    const inviteCode = searchParams.get('invite_code') || searchParams.get('code');
+    if (inviteCode) {
+      setFormData(prev => ({ ...prev, invite_code: inviteCode.toUpperCase() }));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

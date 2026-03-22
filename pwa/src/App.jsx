@@ -160,7 +160,7 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/ficc-connect">
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>
