@@ -1,6 +1,9 @@
 # Stage 1: Build PWA
 FROM node:20-alpine AS pwa-builder
 
+# Use official npm registry (avoid mirror issues)
+RUN npm config set registry https://registry.npmjs.org/
+
 WORKDIR /pwa
 
 # Copy PWA package files
@@ -17,6 +20,9 @@ RUN npm run build
 
 # Stage 2: Production image
 FROM node:20-alpine
+
+# Use official npm registry (avoid mirror issues)
+RUN npm config set registry https://registry.npmjs.org/
 
 WORKDIR /app
 
