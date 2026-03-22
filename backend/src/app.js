@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -11,7 +12,9 @@ const logger = require('./utils/logger');
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false // Disable CSP for PWA compatibility
+}));
 app.use(cors({
   origin: process.env.CLIENT_URL || '*',
   credentials: true
@@ -30,7 +33,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 
-// Routes
+// API Routes
 app.use('/api', routes);
 
 // Health check
@@ -38,9 +41,34 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
 });
 
-// 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// Serve static files from public directory (PWA build)
+const publicPath = path.join(__dirname, '../public');
+
+// Redirect /ficc-connect to /ficc-connect/
+app.get('/ficc-connect', (req, res) => {
+  res.redirect('/ficc-connect/');
+});
+
+// Static files at /ficc-connect - must come before SPA fallback
+app.use('/ficc-connect', express.static(publicPath, {
+  index: 'index.html', // Serve index.html for directory requests
+  extensions: ['html'] // Try adding .html extension
+}));
+
+// SPA fallback for /ficc-connect routes (handle client-side routing)
+// This only runs if express.static didn't find a matching file
+app.use('/ficc-connect', (req, res, next) => {
+  // Only handle GET requests for HTML (SPA routes)
+  if (req.method === 'GET' && req.accepts('html')) {
+    res.sendFile(path.join(publicPath, 'index.html'));
+  } else {
+    next();
+  }
+});
+
+// Redirect root to PWA
+app.get('/', (req, res) => {
+  res.redirect('/ficc-connect/');
 });
 
 // Error handling
