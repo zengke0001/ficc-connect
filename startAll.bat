@@ -55,6 +55,19 @@ if errorlevel 1 (
 echo.
 echo [OK] PostgreSQL is ready!
 
+REM Initialize database if tables don't exist
+echo.
+echo [INFO] Checking database schema...
+docker exec ficc-postgres psql -U postgres -d ficc_connect -c "SELECT 1 FROM users LIMIT 1" >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Database not initialized. Running schema migration...
+    docker cp backend\migrations\000_full_schema.sql ficc-postgres:/tmp/
+    docker exec ficc-postgres psql -U postgres -d ficc_connect -f /tmp/000_full_schema.sql >nul
+    echo [OK] Database initialized successfully!
+) else (
+    echo [OK] Database already initialized
+)
+
 REM Check if backend dependencies are installed
 if not exist "backend\node_modules" (
     echo.

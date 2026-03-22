@@ -69,6 +69,18 @@ done
 echo ""
 echo -e "${GREEN}PostgreSQL is ready!${NC}"
 
+# Initialize database if tables don't exist
+echo ""
+echo -e "${YELLOW}Checking database schema...${NC}"
+if ! docker exec ficc-postgres psql -U postgres -d ficc_connect -c "SELECT 1 FROM users LIMIT 1" > /dev/null 2>&1; then
+    echo "Database not initialized. Running schema migration..."
+    docker cp backend/migrations/000_full_schema.sql ficc-postgres:/tmp/
+    docker exec ficc-postgres psql -U postgres -d ficc_connect -f /tmp/000_full_schema.sql > /dev/null
+    echo -e "${GREEN}Database initialized successfully!${NC}"
+else
+    echo -e "${GREEN}Database already initialized${NC}"
+fi
+
 # Check if backend dependencies are installed
 if [ ! -d "backend/node_modules" ]; then
     echo ""
