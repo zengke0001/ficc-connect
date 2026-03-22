@@ -1,16 +1,15 @@
 # Stage 1: Build PWA
 FROM node:20-alpine AS pwa-builder
 
-# Use official npm registry (avoid mirror issues)
-RUN npm config set registry https://registry.npmjs.org/
-
 WORKDIR /pwa
 
 # Copy PWA package files
 COPY pwa/package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies using official registry
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config delete registry 2>/dev/null || true && \
+    npm ci --registry https://registry.npmjs.org/
 
 # Copy PWA source
 COPY pwa/ ./
@@ -21,14 +20,15 @@ RUN npm run build
 # Stage 2: Production image
 FROM node:20-alpine
 
-# Use official npm registry (avoid mirror issues)
-RUN npm config set registry https://registry.npmjs.org/
-
 WORKDIR /app
 
 # Install dependencies first (layer caching)
 COPY backend/package*.json ./
-RUN npm ci --only=production
+
+# Install using official registry
+RUN npm config set registry https://registry.npmjs.org/ && \
+    npm config delete registry 2>/dev/null || true && \
+    npm ci --omit=dev --registry https://registry.npmjs.org/
 
 # Copy backend source
 COPY backend/ ./
