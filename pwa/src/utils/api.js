@@ -81,11 +81,12 @@ export const api = new API();
 export const authAPI = {
   wechatLogin: (code, nickname, avatarUrl) =>
     api.post('/api/auth/wechat', { code, nickname, avatar_url: avatarUrl }),
-  login: (email, password) => api.post('/api/auth/login', { email, password }),
+  login: (email) => api.post('/api/auth/login', { email }),
   register: (data) => api.post('/api/auth/register', data),
   getProfile: () => api.get('/api/auth/profile'),
   updateProfile: (data) => api.put('/api/auth/profile', data),
-  getTeams: () => api.get('/api/auth/teams')
+  getTeams: () => api.get('/api/auth/teams'),
+  getInviteCode: () => api.get('/api/auth/invite-code')
 };
 
 // Activities API
@@ -112,6 +113,8 @@ export const activityAPI = {
 export const photoAPI = {
   upload: (file, activityId, checkinId) =>
     api.upload('/api/photos/upload', file, { activityId, checkinId }),
+  uploadGeneral: (file) =>
+    api.upload('/api/photos/upload-general', file),
   getActivityPhotos: (activityId, params = {}) => {
     const query = new URLSearchParams(params).toString();
     return api.get(`/api/photos/activity/${activityId}?${query}`);

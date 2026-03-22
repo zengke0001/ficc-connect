@@ -19,7 +19,10 @@ export function Home() {
   const loadTodayStatus = async () => {
     try {
       const result = await activityAPI.getTodayStatus();
-      const acts = result.data.activities || [];
+      const acts = (result.data.activities || []).map(a => ({
+        ...a,
+        id: a.activity_id  // ActivityCard expects 'id'
+      }));
       setActivities(acts);
 
       const max = acts.reduce((m, a) => Math.max(m, a.current_streak || 0), 0);

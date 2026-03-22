@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { activityAPI } from '../utils/api';
+import { activityAPI, photoAPI } from '../utils/api';
 import {
   ArrowLeft, Calendar, Image as ImageIcon, Loader2, X
 } from 'lucide-react';
@@ -21,8 +21,10 @@ export function CreateActivity() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
+      e.target.value = '';
       return;
     }
 
@@ -59,13 +61,25 @@ export function CreateActivity() {
     setLoading(true);
 
     try {
-      // For now, we'll create without cover image upload
-      // In production, you'd upload the image first
+      let cover_image_url = null;
+
+      // Upload cover image if selected
+      if (formData.cover_image) {
+        try {
+          const uploadResult = await photoAPI.uploadGeneral(formData.cover_image);
+          cover_image_url = uploadResult.data.photo.url;
+        } catch (uploadError) {
+          console.error('Failed to upload cover image:', uploadError);
+          alert('Failed to upload cover image. Creating activity without cover.');
+        }
+      }
+
       const data = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         start_date: formData.start_date,
-        end_date: formData.end_date
+        end_date: formData.end_date,
+        cover_image_url
       };
 
       const result = await activityAPI.create(data);
@@ -127,7 +141,7 @@ export function CreateActivity() {
                 <span className="text-gray-500">Tap to add cover image</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
                   onChange={handleCoverSelect}
                   className="hidden"
                 />

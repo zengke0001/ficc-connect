@@ -1,24 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Flame, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Flame, Mail, AlertCircle } from 'lucide-react';
 
 export function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Load saved email from localStorage on mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('user_email');
+    if (savedEmail) {
+      setEmail(savedEmail);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const result = await login(formData.email, formData.password);
+    const result = await login(email);
 
     if (result.success) {
+      // Save email to localStorage for next time
+      localStorage.setItem('user_email', email);
       navigate('/');
     } else {
       setError(result.error || 'Login failed');
@@ -57,36 +66,12 @@ export function Login() {
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="input pl-10"
                   placeholder="Enter your email"
                   required
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="input pl-10 pr-10"
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
               </div>
             </div>
 
@@ -109,9 +94,9 @@ export function Login() {
           </div>
         </div>
 
-        {/* Demo credentials */}
+        {/* Simple login hint */}
         <div className="mt-6 text-center text-sm text-gray-400">
-          <p>Demo: demo@example.com / password</p>
+          <p>Enter your email to sign in</p>
         </div>
       </div>
     </div>

@@ -3,20 +3,23 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../utils/api';
 import {
-  User, Mail, Award, Flame, Camera, LogOut,
-  ChevronRight, Edit2, Trophy, Activity
+  User, Award, Flame, Camera, LogOut,
+  ChevronRight, Edit2, Trophy, Activity, KeyRound, Copy, Check
 } from 'lucide-react';
 
 export function Profile() {
   const { user, logout, updateProfile } = useAuth();
   const [stats, setStats] = useState(null);
   const [achievements, setAchievements] = useState([]);
+  const [inviteCode, setInviteCode] = useState('');
+  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editNickname, setEditNickname] = useState('');
 
   useEffect(() => {
     loadProfile();
+    loadInviteCode();
   }, []);
 
   const loadProfile = async () => {
@@ -29,6 +32,22 @@ export function Profile() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadInviteCode = async () => {
+    try {
+      const result = await authAPI.getInviteCode();
+      setInviteCode(result.data.invite_code);
+    } catch (error) {
+      console.error('Failed to load invite code:', error);
+    }
+  };
+
+  const handleCopyInviteCode = () => {
+    navigator.clipboard.writeText(inviteCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   const handleEdit = () => {
@@ -182,6 +201,38 @@ export function Profile() {
           </p>
         )}
       </div>
+
+      {/* Invite Code */}
+      {inviteCode && (
+        <div className="card p-4 mb-6">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <KeyRound className="w-4 h-4" />
+            Invite Code
+          </h2>
+          <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-3">
+            <span className="font-mono text-xl font-bold tracking-widest text-primary">
+              {inviteCode}
+            </span>
+            <button
+              onClick={handleCopyInviteCode}
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span className="text-green-500">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Share this code with colleagues to invite them</p>
+        </div>
+      )}
 
       {/* Menu */}
       <div className="card overflow-hidden mb-6">

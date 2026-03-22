@@ -1,8 +1,30 @@
+// Parse date string to Date object (handles timezone issues)
+function parseDate(dateString) {
+  if (!dateString) return null;
+
+  // If it's already a Date object, return it
+  if (dateString instanceof Date) return dateString;
+
+  // Handle ISO date strings (e.g., "2025-03-21T00:00:00.000Z")
+  if (dateString.includes('T')) {
+    const date = new Date(dateString);
+    // Adjust for timezone to get the correct local date
+    const timezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + timezoneOffset);
+  }
+
+  // Handle date-only strings (e.g., "2025-03-21")
+  // Parse as local date to avoid timezone shifts
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 // Format date range
 export function formatDateRange(startDate, endDate) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const now = new Date();
+  const start = parseDate(startDate);
+  const end = parseDate(endDate);
+
+  if (!start || !end) return '';
 
   const format = (date) => {
     const y = date.getFullYear();
@@ -23,9 +45,15 @@ export function formatDateRange(startDate, endDate) {
 
 // Calculate days remaining
 export function daysRemaining(endDate) {
-  const end = new Date(endDate);
+  const end = parseDate(endDate);
+  if (!end) return 0;
+
   const now = new Date();
-  const diff = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  // Reset time to midnight for accurate day calculation
+  const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endDateOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  const diff = Math.ceil((endDateOnly - nowDate) / (1000 * 60 * 60 * 24));
   return diff > 0 ? diff : 0;
 }
 
@@ -40,7 +68,9 @@ export function getStreakFlame(streak) {
 
 // Format relative time
 export function formatRelativeTime(dateString) {
-  const date = new Date(dateString);
+  const date = parseDate(dateString);
+  if (!date) return '';
+
   const now = new Date();
   const diffMs = now - date;
   const diffSecs = Math.floor(diffMs / 1000);
@@ -53,7 +83,11 @@ export function formatRelativeTime(dateString) {
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
 
-  return date.toLocaleDateString();
+  // Use consistent date format
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}.${m}.${d}`;
 }
 
 // Format number with commas

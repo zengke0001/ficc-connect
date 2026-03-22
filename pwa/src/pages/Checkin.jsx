@@ -39,13 +39,16 @@ export function Checkin() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
+      e.target.value = '';
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
       alert('Image size should be less than 10MB');
+      e.target.value = '';
       return;
     }
 
@@ -171,7 +174,7 @@ export function Checkin() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/gif,image/webp"
             onChange={handlePhotoSelect}
             className="hidden"
           />

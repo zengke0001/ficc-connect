@@ -76,6 +76,11 @@ out/
 # Vuepress build output
 .vuepress/dist/
 
+# PWA build output
+pwa/dist/
+pwa/node_modules/
+pwa/.vite/
+
 # Serverless directories
 .serverless/
 

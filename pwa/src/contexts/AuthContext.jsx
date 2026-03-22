@@ -31,9 +31,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (email) => {
     try {
-      const result = await authAPI.login(email, password);
+      const result = await authAPI.login(email);
       localStorage.setItem('token', result.data.token);
       setUser(result.data.user);
       setIsAuthenticated(true);

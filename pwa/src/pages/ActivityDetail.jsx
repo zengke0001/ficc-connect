@@ -46,7 +46,7 @@ export function ActivityDetail() {
       loadActivity();
     } catch (error) {
       console.error('Failed to join:', error);
-      alert('Failed to join activity');
+      alert(error.message || 'Failed to join activity');
     } finally {
       setActionLoading(false);
     }
