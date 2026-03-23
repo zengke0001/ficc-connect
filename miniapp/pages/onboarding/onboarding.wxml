@@ -1,7 +1,7 @@
 <!-- pages/onboarding/onboarding.wxml -->
 <view class="container onboarding">
 
-  <!-- Welcome Step -->
+  <!-- Login Step (step=0) -->
   <block wx:if="{{step === 0}}">
     <view class="hero gradient-blue">
       <view class="hero-emoji">🏆</view>
@@ -33,43 +33,103 @@
       </view>
     </view>
 
-    <!-- Profile Setup -->
-    <view class="profile-setup">
-      <view class="setup-title">Set Up Your Profile</view>
-      
-      <!-- Avatar Selection -->
-      <view class="avatar-section">
-        <button class="avatar-btn" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-          <image class="avatar-preview" src="{{avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"/>
-          <view class="avatar-hint">Tap to set avatar</view>
-        </button>
+    <!-- Login Form -->
+    <view class="auth-form">
+      <view class="form-title">Sign In</view>
+
+      <view class="form-group">
+        <view class="form-label">Email</view>
+        <view class="input-wrapper">
+          <text class="input-icon">📧</text>
+          <input class="form-input"
+                 type="text"
+                 placeholder="Enter your email"
+                 bindinput="onLoginEmailInput"
+                 value="{{loginEmail}}"/>
+        </view>
       </view>
-      
-      <!-- Nickname Input (optional) -->
-      <view class="nickname-section">
-        <view class="nickname-label">Nickname (optional)</view>
-        <input class="nickname-input" 
-               type="nickname" 
-               placeholder="Tap to use WeChat nickname" 
-               bindinput="onNicknameInput"
-               bindblur="onNicknameBlur"
-               value="{{nickname}}"/>
-      </view>
-      
-      <view class="login-area safe-bottom">
+
+      <view class="form-actions safe-bottom">
         <button class="btn btn-primary btn-block"
                 loading="{{loading}}"
-                disabled="{{!avatarUrl}}"
+                disabled="{{!loginEmail}}"
                 bindtap="handleLogin">
-          Start Now 🚀
+          Sign In
         </button>
-        <view class="tip">By continuing, you agree to our terms of service</view>
+        <view class="form-switch">
+          <text class="form-switch-text">Don't have an account? </text>
+          <text class="form-switch-link" bindtap="goToRegister">Sign Up</text>
+        </view>
       </view>
     </view>
   </block>
 
-  <!-- Team Select Step -->
+  <!-- Register Step (step=1) -->
   <block wx:if="{{step === 1}}">
+    <view class="hero gradient-blue hero-compact">
+      <view class="hero-emoji">🚀</view>
+      <view class="hero-title">Create Account</view>
+      <view class="hero-subtitle">Join FICC Connect with an invite code</view>
+    </view>
+
+    <view class="auth-form">
+      <view class="form-title">Sign Up</view>
+
+      <view class="form-group">
+        <view class="form-label">Email</view>
+        <view class="input-wrapper">
+          <text class="input-icon">📧</text>
+          <input class="form-input"
+                 type="text"
+                 placeholder="Enter your email"
+                 bindinput="onEmailInput"
+                 value="{{email}}"/>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">Nickname (Optional)</view>
+        <view class="input-wrapper">
+          <text class="input-icon">👤</text>
+          <input class="form-input"
+                 type="text"
+                 placeholder="Choose a display name"
+                 bindinput="onNicknameInput"
+                 value="{{nickname}}"
+                 maxlength="50"/>
+        </view>
+      </view>
+
+      <view class="form-group">
+        <view class="form-label">Invite Code</view>
+        <view class="input-wrapper">
+          <text class="input-icon">🔑</text>
+          <input class="form-input invite-code-input"
+                 type="text"
+                 placeholder="Enter invite code"
+                 bindinput="onInviteCodeInput"
+                 value="{{inviteCode}}"/>
+        </view>
+        <view class="form-hint">Ask a member for the invite code</view>
+      </view>
+
+      <view class="form-actions safe-bottom">
+        <button class="btn btn-primary btn-block"
+                loading="{{loading}}"
+                disabled="{{!email || !inviteCode}}"
+                bindtap="handleRegister">
+          Create Account
+        </button>
+        <view class="form-switch">
+          <text class="form-switch-text">Already have an account? </text>
+          <text class="form-switch-link" bindtap="goToLogin">Sign In</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- Team Select Step (step=2) -->
+  <block wx:if="{{step === 2}}">
     <view class="team-header">
       <view class="team-title">Select Your Team</view>
       <view class="team-subtitle">For team challenges and rankings</view>
@@ -91,8 +151,11 @@
       <button class="btn btn-primary btn-block"
               disabled="{{!selectedTeamId}}"
               bindtap="confirmTeam">
-        Confirm & Start! 🚀
+        Confirm & Start!
       </button>
+      <view class="team-skip" bindtap="skipTeam">
+        <text class="team-skip-text">Skip for now</text>
+      </view>
     </view>
   </block>
 

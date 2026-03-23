@@ -8,6 +8,10 @@ const authAPI = {
       method: 'POST',
       data: { code, nickname, avatar_url: avatarUrl }
     }),
+  login: (email) =>
+    request('/api/auth/login', { method: 'POST', data: { email } }),
+  register: (data) =>
+    request('/api/auth/register', { method: 'POST', data }),
   getProfile: () => request('/api/auth/profile'),
   updateProfile: (data) => request('/api/auth/profile', { method: 'PUT', data }),
   getTeams: () => request('/api/auth/teams')
