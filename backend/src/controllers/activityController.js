@@ -4,12 +4,14 @@ const checkinService = require('../services/checkinService');
 class ActivityController {
   async list(req, res, next) {
     try {
-      const { status, my_activities, page, limit } = req.query;
+      const { status, my_activities, page, limit, year, include_all } = req.query;
       const userId = req.user?.id;
       const data = await activityService.listActivities({
         status,
         my_activities: my_activities === 'true',
         userId,
+        year,
+        include_all: include_all === 'true',
         page: parseInt(page) || 1,
         limit: parseInt(limit) || 10
       });

@@ -2,7 +2,7 @@ const { query, getClient } = require('../config/database');
 const logger = require('../utils/logger');
 
 class ActivityService {
-  async listActivities({ status, my_activities, userId, page = 1, limit = 10 }) {
+  async listActivities({ status, my_activities, userId, year, include_all, page = 1, limit = 10 }) {
     const offset = (page - 1) * limit;
     const params = [];
     let whereClauses = [];
@@ -10,13 +10,18 @@ class ActivityService {
     if (status) {
       params.push(status);
       whereClauses.push(`a.status = $${params.length}`);
-    } else {
+    } else if (!include_all) {
       whereClauses.push(`a.status != 'archived'`);
     }
 
     if (my_activities && userId) {
       params.push(userId);
       whereClauses.push(`ap.user_id = $${params.length}`);
+    }
+
+    if (year) {
+      params.push(parseInt(year));
+      whereClauses.push(`EXTRACT(YEAR FROM a.start_date) = $${params.length}`);
     }
 
     const whereStr = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
