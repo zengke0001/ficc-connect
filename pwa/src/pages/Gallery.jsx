@@ -153,8 +153,9 @@ function ActivityGalleryPreview({ activity }) {
     );
   };
 
-  // Don't render if still loading
+  // Don't render if still loading or no photos
   if (loading) return null;
+  if (photos.length === 0) return null;
 
   const isArchived = activity.status === 'completed';
 
@@ -193,27 +194,12 @@ function ActivityGalleryPreview({ activity }) {
       </Link>
 
       {/* Photo Preview */}
-      {photos.length > 0 ? (
-        <div className="px-4 pb-4">
-          <PhotoGrid
-            photos={photos.slice(0, 4)}
-            onPhotoUpdate={handlePhotoUpdate}
-          />
-        </div>
-      ) : (
-        <div className="px-4 pb-4">
-          <div className="bg-gray-50 rounded-lg p-6 text-center">
-            <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No photos yet</p>
-            <Link
-              to={`/activity/${activity.id}`}
-              className="text-sm text-primary mt-2 inline-block"
-            >
-              Be the first to check in!
-            </Link>
-          </div>
-        </div>
-      )}
+      <div className="px-4 pb-4">
+        <PhotoGrid
+          photos={photos.slice(0, 4)}
+          onPhotoUpdate={handlePhotoUpdate}
+        />
+      </div>
     </div>
   );
 }
