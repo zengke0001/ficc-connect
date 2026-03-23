@@ -81,10 +81,52 @@ ensure_sudo() {
 
 # Function to check if Docker is running
 check_docker() {
-    if ! docker info > /dev/null 2>&1; then
-        echo -e "${RED}Error: Docker is not running${NC}"
-        echo "Please start Docker first"
-        exit 1
+    # Try without sudo first
+    if docker info > /dev/null 2>&1; then
+        return 0
+    fi
+
+    # Try with sudo
+    if sudo docker info > /dev/null 2>&1; then
+        echo -e "${YELLOW}Note: Docker requires sudo. Consider adding user to docker group:${NC}"
+        echo "  sudo usermod -aG docker \$USER"
+        echo "  (Then log out and back in for changes to take effect)"
+        echo ""
+        # Set a flag to use sudo for docker commands
+        USE_SUDO_DOCKER=true
+        return 0
+    fi
+
+    # Docker not running - try to start it
+    echo -e "${YELLOW}Docker is not running. Attempting to start...${NC}"
+    if command -v systemctl &> /dev/null; then
+        sudo systemctl start docker 2>/dev/null || true
+        sleep 2
+    elif command -v service &> /dev/null; then
+        sudo service docker start 2>/dev/null || true
+        sleep 2
+    fi
+
+    # Check again
+    if docker info > /dev/null 2>&1 || sudo docker info > /dev/null 2>&1; then
+        echo -e "${GREEN}Docker started successfully${NC}"
+        return 0
+    fi
+
+    echo -e "${RED}Error: Docker is not running and could not be started${NC}"
+    echo "Please start Docker manually:"
+    echo "  sudo systemctl start docker"
+    echo "  # or"
+    echo "  sudo service docker start"
+    exit 1
+}
+
+# Helper function to run docker commands (with or without sudo)
+docker_cmd() {
+    if [ "${USE_SUDO_DOCKER:-false}" = true ]; then
+        sudo docker "$@"
+    else
+        docker "$@"
     fi
 }
 
@@ -93,14 +135,14 @@ start_postgres() {
     echo -e "${YELLOW}Starting PostgreSQL...${NC}"
 
     # Check if postgres container exists
-    if docker ps -a --format '{{.Names}}' | grep -q "^ficc-postgres$"; then
+    if docker_cmd ps -a --format '{{.Names}}' | grep -q "^ficc-postgres$"; then
         # Container exists, start it
-        docker start ficc-postgres > /dev/null
+        docker_cmd start ficc-postgres > /dev/null
         echo -e "${GREEN}PostgreSQL container started${NC}"
     else
         # Create new container
         echo "Creating PostgreSQL container..."
-        docker run -d \
+        docker_cmd run -d \
             --name ficc-postgres \
             --restart unless-stopped \
             -e POSTGRES_DB=ficc_connect \
@@ -115,7 +157,7 @@ start_postgres() {
 
     # Wait for PostgreSQL to accept connections
     echo "Checking PostgreSQL connection..."
-    until docker exec ficc-postgres pg_isready -U postgres > /dev/null 2>&1; do
+    until docker_cmd exec ficc-postgres pg_isready -U postgres > /dev/null 2>&1; do
         echo -n "."
         sleep 1
     done
@@ -126,10 +168,10 @@ start_postgres() {
 # Function to initialize database
 init_database() {
     echo -e "${YELLOW}Checking database schema...${NC}"
-    if ! docker exec ficc-postgres psql -U postgres -d ficc_connect -c "SELECT 1 FROM users LIMIT 1" > /dev/null 2>&1; then
+    if ! docker_cmd exec ficc-postgres psql -U postgres -d ficc_connect -c "SELECT 1 FROM users LIMIT 1" > /dev/null 2>&1; then
         echo "Database not initialized. Running schema migration..."
-        docker cp backend/migrations/000_full_schema.sql ficc-postgres:/tmp/
-        docker exec ficc-postgres psql -U postgres -d ficc_connect -f /tmp/000_full_schema.sql > /dev/null
+        docker_cmd cp backend/migrations/000_full_schema.sql ficc-postgres:/tmp/
+        docker_cmd exec ficc-postgres psql -U postgres -d ficc_connect -f /tmp/000_full_schema.sql > /dev/null
         echo -e "${GREEN}Database initialized successfully!${NC}"
     else
         echo -e "${GREEN}Database already initialized${NC}"
@@ -245,7 +287,7 @@ stop_daemon() {
     sudo systemctl stop $SERVICE_NAME 2>/dev/null || true
 
     echo -e "${YELLOW}Stopping PostgreSQL...${NC}"
-    docker stop ficc-postgres 2>/dev/null || true
+    docker_cmd stop ficc-postgres 2>/dev/null || true
 
     echo -e "${GREEN}All services stopped${NC}"
 }
@@ -280,7 +322,7 @@ show_status() {
 
     echo ""
     echo -e "${YELLOW}PostgreSQL Status:${NC}"
-    if docker ps --format '{{.Names}}' | grep -q "^ficc-postgres$"; then
+    if docker_cmd ps --format '{{.Names}}' | grep -q "^ficc-postgres$"; then
         echo -e "${GREEN}PostgreSQL container is running${NC}"
     else
         echo -e "${RED}PostgreSQL container is not running${NC}"
@@ -323,7 +365,7 @@ uninstall_service() {
     read -p "Stop PostgreSQL container? [y/N] " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker stop ficc-postgres 2>/dev/null || true
+        docker_cmd stop ficc-postgres 2>/dev/null || true
         echo -e "${GREEN}PostgreSQL stopped${NC}"
     fi
 
@@ -342,7 +384,7 @@ run_foreground() {
     cleanup() {
         echo ""
         echo -e "${YELLOW}Shutting down services...${NC}"
-        docker stop ficc-postgres 2>/dev/null || true
+        docker_cmd stop ficc-postgres 2>/dev/null || true
         echo -e "${GREEN}PostgreSQL stopped${NC}"
     }
 
