@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Heart, User } from 'lucide-react';
 import { formatRelativeTime, truncate } from '../utils/helpers';
 import { photoAPI } from '../utils/api';
+import { PhotoViewer } from './PhotoViewer';
 
 export function PhotoGrid({ photos, onPhotoUpdate }) {
   const [liking, setLiking] = useState({});
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleLike = async (photo, e) => {
     e.preventDefault();
@@ -28,6 +31,19 @@ export function PhotoGrid({ photos, onPhotoUpdate }) {
     }
   };
 
+  const openViewer = (index) => {
+    setCurrentIndex(index);
+    setViewerOpen(true);
+  };
+
+  const closeViewer = () => {
+    setViewerOpen(false);
+  };
+
+  const handleViewerPhotoUpdate = (photoId, isLiked) => {
+    onPhotoUpdate?.(photoId, isLiked);
+  };
+
   if (!photos || photos.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -37,12 +53,14 @@ export function PhotoGrid({ photos, onPhotoUpdate }) {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-      {photos.map((photo) => (
-        <div
-          key={photo.id}
-          className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group"
-        >
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {photos.map((photo, index) => (
+          <div
+            key={photo.id}
+            className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group cursor-pointer"
+            onClick={() => openViewer(index)}
+          >
           <img
             src={photo.url}
             alt="Activity photo"
@@ -102,5 +120,15 @@ export function PhotoGrid({ photos, onPhotoUpdate }) {
         </div>
       ))}
     </div>
+
+    {/* Full Screen Viewer */}
+    <PhotoViewer
+      photos={photos}
+      currentIndex={currentIndex}
+      isOpen={viewerOpen}
+      onClose={closeViewer}
+      onPhotoUpdate={handleViewerPhotoUpdate}
+    />
+  </>
   );
 }

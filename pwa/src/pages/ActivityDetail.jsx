@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { activityAPI } from '../utils/api';
 import { PhotoGrid } from '../components/PhotoGrid';
+import { PhotoViewer } from '../components/PhotoViewer';
 import {
   ArrowLeft, Calendar, Users, Trophy, Flame,
   CheckCircle, LogOut, Camera, Loader2, Image as ImageIcon,
@@ -21,6 +22,8 @@ export function ActivityDetail() {
   const [isJoined, setIsJoined] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
 
   useEffect(() => {
     loadActivity();
@@ -74,6 +77,15 @@ export function ActivityDetail() {
 
   const handleCheckin = () => {
     navigate(`/checkin/${id}`);
+  };
+
+  const openPhotoViewer = (index) => {
+    setViewerIndex(index);
+    setViewerOpen(true);
+  };
+
+  const closePhotoViewer = () => {
+    setViewerOpen(false);
   };
 
   const handleArchive = async () => {
@@ -184,15 +196,16 @@ export function ActivityDetail() {
               </Link>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {recentPhotos.slice(0, 6).map((photo) => (
+              {recentPhotos.slice(0, 6).map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="aspect-square rounded-lg overflow-hidden bg-gray-100"
+                  className="aspect-square rounded-lg overflow-hidden bg-gray-100 cursor-pointer"
+                  onClick={() => openPhotoViewer(index)}
                 >
                   <img
                     src={photo.url}
                     alt="Activity photo"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform"
                     loading="lazy"
                   />
                 </div>
@@ -327,6 +340,14 @@ export function ActivityDetail() {
           )}
         </div>
       </div>
+
+      {/* Full Screen Photo Viewer */}
+      <PhotoViewer
+        photos={recentPhotos}
+        currentIndex={viewerIndex}
+        isOpen={viewerOpen}
+        onClose={closePhotoViewer}
+      />
     </div>
   );
 }

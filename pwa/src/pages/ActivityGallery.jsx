@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { photoAPI } from '../utils/api';
 import { PhotoGrid } from '../components/PhotoGrid';
+import { PhotoViewer } from '../components/PhotoViewer';
 import {
   ArrowLeft, Image as ImageIcon, Heart, Trophy, Loader2
 } from 'lucide-react';
@@ -13,6 +14,8 @@ export function ActivityGallery() {
   const [stats, setStats] = useState(null);
   const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
 
   useEffect(() => {
     loadGallery();
@@ -39,6 +42,26 @@ export function ActivityGallery() {
           : p
       )
     );
+    // Also update winners if the photo is there
+    setWinners(prev =>
+      prev.map(p =>
+        p.id === photoId
+          ? { ...p, is_liked: isLiked, likes_count: isLiked ? p.likes_count + 1 : p.likes_count - 1 }
+          : p
+      )
+    );
+  };
+
+  const openViewer = (photoId) => {
+    const index = photos.findIndex(p => p.id === photoId);
+    if (index !== -1) {
+      setViewerIndex(index);
+      setViewerOpen(true);
+    }
+  };
+
+  const closeViewer = () => {
+    setViewerOpen(false);
   };
 
   return (
@@ -87,11 +110,15 @@ export function ActivityGallery() {
             </h2>
             <div className="grid grid-cols-3 gap-3">
               {winners.slice(0, 3).map((photo, index) => (
-                <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden">
+                <div
+                  key={photo.id}
+                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer"
+                  onClick={() => openViewer(photo.id)}
+                >
                   <img
                     src={photo.url}
                     alt="Winner"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform"
                   />
                   <div className="absolute top-1 left-1">
                     {index === 0 && <span className="text-2xl">🥇</span>}
@@ -131,6 +158,15 @@ export function ActivityGallery() {
           )}
         </div>
       </div>
+
+      {/* Full Screen Photo Viewer */}
+      <PhotoViewer
+        photos={photos}
+        currentIndex={viewerIndex}
+        isOpen={viewerOpen}
+        onClose={closeViewer}
+        onPhotoUpdate={handlePhotoUpdate}
+      />
     </div>
   );
 }
