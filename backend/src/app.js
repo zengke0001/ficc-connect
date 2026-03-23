@@ -52,7 +52,23 @@ app.get('/ficc-connect', (req, res) => {
 // Static files at /ficc-connect - must come before SPA fallback
 app.use('/ficc-connect', express.static(publicPath, {
   index: 'index.html', // Serve index.html for directory requests
-  extensions: ['html'] // Try adding .html extension
+  extensions: ['html'], // Try adding .html extension
+  setHeaders: (res, path) => {
+    // Set correct MIME type for webmanifest
+    if (path.endsWith('.webmanifest')) {
+      res.setHeader('Content-Type', 'application/manifest+json');
+    }
+    // Set correct MIME type for service worker
+    if (path.endsWith('sw.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+      // Ensure service worker is not cached
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+    // Add COOP/COEP headers for PWA
+    if (path.endsWith('.js') || path.endsWith('.css')) {
+      res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+    }
+  }
 }));
 
 // SPA fallback for /ficc-connect routes (handle client-side routing)

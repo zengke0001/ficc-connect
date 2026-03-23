@@ -23,8 +23,10 @@ export default defineConfig({
         scope: '/ficc-connect/',
         start_url: '/ficc-connect/',
         icons: [
-          { src: '/ficc-connect/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/ficc-connect/icon-512.png', sizes: '512x512', type: 'image/png' }
+          { src: '/ficc-connect/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
+          { src: '/ficc-connect/icon-512.svg', sizes: '512x512', type: 'image/svg+xml' },
+          { src: '/ficc-connect/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: '/ficc-connect/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       },
       workbox: {
