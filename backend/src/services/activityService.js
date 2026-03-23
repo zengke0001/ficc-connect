@@ -157,6 +157,52 @@ class ActivityService {
     return activity;
   }
 
+  async updateActivity(activityId, userId, updates) {
+    // Check if user is the creator
+    const activityResult = await query(
+      'SELECT * FROM activities WHERE id = $1',
+      [activityId]
+    );
+
+    if (activityResult.rows.length === 0) {
+      throw new Error('Activity not found');
+    }
+
+    const activity = activityResult.rows[0];
+
+    if (activity.creator_id !== userId) {
+      throw new Error('Only the activity creator can edit this activity');
+    }
+
+    // Build update query dynamically
+    const allowedFields = ['title', 'description', 'cover_image_url'];
+    const setClauses = [];
+    const values = [];
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (allowedFields.includes(key) && value !== undefined) {
+        setClauses.push(`${key} = $${setClauses.length + 1}`);
+        values.push(value);
+      }
+    }
+
+    if (setClauses.length === 0) {
+      throw new Error('No valid fields to update');
+    }
+
+    values.push(activityId);
+
+    const result = await query(`
+      UPDATE activities
+      SET ${setClauses.join(', ')}
+      WHERE id = $${values.length}
+      RETURNING *
+    `, values);
+
+    logger.info('Activity updated by creator', { activityId, userId, fields: Object.keys(updates) });
+    return result.rows[0];
+  }
+
   async joinActivity(activityId, userId) {
     // Check activity exists and is active
     const activityResult = await query(

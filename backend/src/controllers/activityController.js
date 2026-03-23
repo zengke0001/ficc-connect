@@ -104,6 +104,15 @@ class ActivityController {
       next(error);
     }
   }
+
+  async update(req, res, next) {
+    try {
+      const activity = await activityService.updateActivity(req.params.id, req.user.id, req.body);
+      res.json({ success: true, data: { activity } });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ActivityController();

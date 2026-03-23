@@ -6,7 +6,7 @@ import { PhotoViewer } from '../components/PhotoViewer';
 import {
   ArrowLeft, Calendar, Users, Trophy, Flame,
   CheckCircle, LogOut, Camera, Loader2, Image as ImageIcon,
-  Archive
+  Archive, Edit2, X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDateRange, daysRemaining, getInitials, getAvatarColor } from '../utils/helpers';
@@ -24,6 +24,8 @@ export function ActivityDetail() {
   const [actionLoading, setActionLoading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ title: '', description: '', cover_image_url: '' });
 
   useEffect(() => {
     loadActivity();
@@ -106,6 +108,35 @@ export function ActivityDetail() {
 
   // Check if current user is the activity creator
   const isCreator = user && activity && user.id === activity.creator_id;
+
+  const openEditModal = () => {
+    setEditForm({
+      title: activity.title,
+      description: activity.description || '',
+      cover_image_url: activity.cover_image_url || ''
+    });
+    setEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      await activityAPI.update(id, editForm);
+      await loadActivity();
+      closeEditModal();
+      alert('Activity updated successfully');
+    } catch (error) {
+      console.error('Failed to update activity:', error);
+      alert(error.message || 'Failed to update activity');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -327,6 +358,18 @@ export function ActivityDetail() {
             )
           ) : null}
 
+          {/* Edit button for creator */}
+          {isCreator && (
+            <button
+              onClick={openEditModal}
+              disabled={actionLoading}
+              className="w-full btn btn-outline py-3 mt-3 flex items-center justify-center gap-2 text-gray-600"
+            >
+              <Edit2 className="w-5 h-5" />
+              Edit Activity
+            </button>
+          )}
+
           {/* Archive button for creator */}
           {isCreator && !isArchived && (
             <button
@@ -348,6 +391,80 @@ export function ActivityDetail() {
         isOpen={viewerOpen}
         onClose={closePhotoViewer}
       />
+
+      {/* Edit Activity Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Edit Activity</h2>
+              <button
+                onClick={closeEditModal}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cover Image URL
+                </label>
+                <input
+                  type="url"
+                  value={editForm.cover_image_url}
+                  onChange={(e) => setEditForm({ ...editForm, cover_image_url: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="flex-1 btn btn-outline py-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 btn btn-primary py-2"
+                >
+                  {actionLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
