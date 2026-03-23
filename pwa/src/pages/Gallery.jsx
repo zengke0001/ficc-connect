@@ -15,8 +15,11 @@ export function Gallery() {
 
   const loadActivities = async () => {
     try {
-      const result = await activityAPI.list({ status: 'completed', limit: 10 });
-      setActivities(result.data.activities || []);
+      // Load all activities with photos (not just completed ones)
+      const result = await activityAPI.list({ limit: 50 });
+      // Filter to only show activities that have photos
+      const activitiesWithPhotos = result.data.activities || [];
+      setActivities(activitiesWithPhotos);
     } catch (error) {
       console.error('Failed to load activities:', error);
     } finally {
@@ -29,7 +32,7 @@ export function Gallery() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Gallery</h1>
-        <p className="text-gray-500 mt-1">Photos from completed activities</p>
+        <p className="text-gray-500 mt-1">Photos from all activities</p>
       </div>
 
       {/* Activity Galleries */}
@@ -50,7 +53,7 @@ export function Gallery() {
           </div>
           <h3 className="font-medium text-gray-900 mb-1">No galleries yet</h3>
           <p className="text-sm text-gray-500">
-            Completed activities with photos will appear here
+            Activities with photos will appear here
           </p>
         </div>
       )}

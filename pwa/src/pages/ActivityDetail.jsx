@@ -4,13 +4,16 @@ import { activityAPI } from '../utils/api';
 import { PhotoGrid } from '../components/PhotoGrid';
 import {
   ArrowLeft, Calendar, Users, Trophy, Flame,
-  CheckCircle, LogOut, Camera, Loader2, Image as ImageIcon
+  CheckCircle, LogOut, Camera, Loader2, Image as ImageIcon,
+  Archive
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { formatDateRange, daysRemaining, getInitials, getAvatarColor } from '../utils/helpers';
 
 export function ActivityDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activity, setActivity] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -72,6 +75,25 @@ export function ActivityDetail() {
   const handleCheckin = () => {
     navigate(`/checkin/${id}`);
   };
+
+  const handleArchive = async () => {
+    if (!confirm('Are you sure you want to archive this activity? It will be marked as completed.')) return;
+
+    setActionLoading(true);
+    try {
+      await activityAPI.archive(id);
+      loadActivity();
+      alert('Activity archived successfully');
+    } catch (error) {
+      console.error('Failed to archive:', error);
+      alert(error.message || 'Failed to archive activity');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Check if current user is the activity creator
+  const isCreator = user && activity && user.id === activity.creator_id;
 
   if (loading) {
     return (
@@ -261,9 +283,10 @@ export function ActivityDetail() {
         </div>
 
         {/* Action Buttons */}
-        {!isArchived && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t md:relative md:bg-transparent md:border-0 md:p-0">
-            {isJoined ? (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t md:relative md:bg-transparent md:border-0 md:p-0">
+          {!isArchived ? (
+            // Active activity buttons
+            isJoined ? (
               <div className="flex gap-3">
                 <button
                   onClick={handleCheckin}
@@ -288,9 +311,21 @@ export function ActivityDetail() {
               >
                 {actionLoading ? 'Joining...' : 'Join Activity'}
               </button>
-            )}
-          </div>
-        )}
+            )
+          ) : null}
+
+          {/* Archive button for creator */}
+          {isCreator && !isArchived && (
+            <button
+              onClick={handleArchive}
+              disabled={actionLoading}
+              className="w-full btn btn-outline py-3 mt-3 flex items-center justify-center gap-2 text-gray-600"
+            >
+              <Archive className="w-5 h-5" />
+              {actionLoading ? 'Archiving...' : 'Archive Activity'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

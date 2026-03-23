@@ -99,6 +99,7 @@ export const activityAPI = {
   create: (data) => api.post('/api/activities', data),
   join: (id) => api.post(`/api/activities/${id}/join`, {}),
   leave: (id) => api.post(`/api/activities/${id}/leave`, {}),
+  archive: (id) => api.post(`/api/activities/${id}/archive`, {}),
   getLeaderboard: (id, type = 'overall') =>
     api.get(`/api/activities/${id}/leaderboard?type=${type}`),
   checkin: (id, data) => api.post(`/api/activities/${id}/checkin`, data),

@@ -28,5 +28,6 @@ router.post('/:id/leave', auth, activityController.leave.bind(activityController
 router.get('/:id/leaderboard', activityController.getLeaderboard.bind(activityController));
 router.post('/:id/checkin', auth, activityController.checkin.bind(activityController));
 router.get('/:id/checkins', activityController.getCheckins.bind(activityController));
+router.post('/:id/archive', auth, activityController.archive.bind(activityController));
 
 module.exports = router;

@@ -93,6 +93,15 @@ class ActivityController {
       next(error);
     }
   }
+
+  async archive(req, res, next) {
+    try {
+      const activity = await activityService.archiveActivity(req.params.id, req.user.id);
+      res.json({ success: true, data: { activity } });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ActivityController();

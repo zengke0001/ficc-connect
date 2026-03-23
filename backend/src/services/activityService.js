@@ -259,7 +259,7 @@ class ActivityService {
 
   async archiveCompletedActivities() {
     const result = await query(`
-      UPDATE activities 
+      UPDATE activities
       SET status = 'completed'
       WHERE status = 'active' AND end_date < CURRENT_DATE
       RETURNING id, title
@@ -270,6 +270,38 @@ class ActivityService {
     }
 
     return result.rows;
+  }
+
+  async archiveActivity(activityId, userId) {
+    // Check if user is the creator
+    const activityResult = await query(
+      'SELECT * FROM activities WHERE id = $1',
+      [activityId]
+    );
+
+    if (activityResult.rows.length === 0) {
+      throw new Error('Activity not found');
+    }
+
+    const activity = activityResult.rows[0];
+
+    if (activity.creator_id !== userId) {
+      throw new Error('Only the activity creator can archive this activity');
+    }
+
+    if (activity.status === 'completed') {
+      throw new Error('Activity is already archived');
+    }
+
+    const result = await query(`
+      UPDATE activities
+      SET status = 'completed'
+      WHERE id = $1
+      RETURNING *
+    `, [activityId]);
+
+    logger.info('Activity archived by creator', { activityId, userId });
+    return result.rows[0];
   }
 
   async awardPoints(userId, points, reason) {
