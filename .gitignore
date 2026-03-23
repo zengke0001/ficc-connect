@@ -129,6 +129,9 @@ miniapp/.wechatide.ib.json
 uploads/
 public/uploads/
 
+# PWA build output in backend
+backend/public/
+
 # IDE specific files
 *.iml
 *.ipr

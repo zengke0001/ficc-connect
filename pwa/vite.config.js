@@ -4,6 +4,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/ficc-connect/',
+  build: {
+    // Output to backend/public so the backend can serve PWA files
+    outDir: '../backend/public',
+    emptyOutDir: true
+  },
   plugins: [
     react(),
     VitePWA({

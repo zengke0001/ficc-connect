@@ -30,7 +30,8 @@ export function ActivityDetail() {
       setParticipants(result.data.participants || []);
       setLeaderboard(result.data.leaderboard || []);
       setRecentPhotos(result.data.recentPhotos || []);
-      setIsJoined(result.data.is_joined);
+      // Backend returns isJoined (camelCase), not is_joined
+      setIsJoined(result.data.isJoined ?? result.data.is_joined ?? false);
     } catch (error) {
       console.error('Failed to load activity:', error);
     } finally {

@@ -91,6 +91,19 @@ class ActivityService {
     // Get top 5 leaderboard
     const leaderboard = await this.getLeaderboard(activityId, 'overall', 5);
 
+    // Get participants list
+    const participantsResult = await query(`
+      SELECT 
+        ap.user_id, ap.total_checkins, ap.total_points, ap.current_streak,
+        u.nickname, u.avatar_url, u.team_id,
+        t.name as team_name, t.color as team_color
+      FROM activity_participants ap
+      JOIN users u ON ap.user_id = u.id
+      LEFT JOIN teams t ON u.team_id = t.id
+      WHERE ap.activity_id = $1
+      ORDER BY ap.total_points DESC
+    `, [activityId]);
+
     // Get recent photos (6 photos)
     const photosResult = await query(`
       SELECT p.*, u.nickname, u.avatar_url
@@ -105,6 +118,7 @@ class ActivityService {
       activity,
       isJoined,
       userParticipant,
+      participants: participantsResult.rows,
       leaderboard,
       recentPhotos: photosResult.rows
     };
