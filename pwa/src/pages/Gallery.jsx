@@ -37,7 +37,19 @@ export function Gallery() {
       if (yearFilter) params.year = yearFilter;
 
       const result = await activityAPI.list(params);
-      setActivities(result.data.activities || []);
+      // Filter to only show activities with photos (fetched sequentially to avoid rate limit)
+      const activitiesWithPhotos = [];
+      for (const activity of result.data.activities || []) {
+        try {
+          const photoResult = await photoAPI.getActivityPhotos(activity.id, { limit: 1 });
+          if (photoResult.data.photos?.length > 0) {
+            activitiesWithPhotos.push(activity);
+          }
+        } catch (e) {
+          // Skip activities that fail to load photos
+        }
+      }
+      setActivities(activitiesWithPhotos);
     } catch (error) {
       console.error('Failed to load activities:', error);
     } finally {
@@ -126,7 +138,6 @@ export function Gallery() {
 
 function ActivityGalleryPreview({ activity }) {
   const [photos, setPhotos] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPhotos();
@@ -138,8 +149,6 @@ function ActivityGalleryPreview({ activity }) {
       setPhotos(result.data.photos || []);
     } catch (error) {
       console.error('Failed to load photos:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -152,10 +161,6 @@ function ActivityGalleryPreview({ activity }) {
       )
     );
   };
-
-  // Don't render if still loading or no photos
-  if (loading) return null;
-  if (photos.length === 0) return null;
 
   const isArchived = activity.status === 'completed';
 
