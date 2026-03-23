@@ -358,28 +358,30 @@ export function ActivityDetail() {
             )
           ) : null}
 
-          {/* Edit button for creator */}
+          {/* Creator action buttons */}
           {isCreator && (
-            <button
-              onClick={openEditModal}
-              disabled={actionLoading}
-              className="w-full btn btn-outline py-3 mt-3 flex items-center justify-center gap-2 text-gray-600"
-            >
-              <Edit2 className="w-5 h-5" />
-              Edit Activity
-            </button>
-          )}
-
-          {/* Archive button for creator */}
-          {isCreator && !isArchived && (
-            <button
-              onClick={handleArchive}
-              disabled={actionLoading}
-              className="w-full btn btn-outline py-3 mt-3 flex items-center justify-center gap-2 text-gray-600"
-            >
-              <Archive className="w-5 h-5" />
-              {actionLoading ? 'Archiving...' : 'Archive Activity'}
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={openEditModal}
+                disabled={actionLoading}
+                className="flex-1 btn btn-outline py-2 flex items-center justify-center gap-1 text-gray-600 text-sm"
+                title="Edit Activity"
+              >
+                <Edit2 className="w-4 h-4" />
+                <span>Edit</span>
+              </button>
+              {!isArchived && (
+                <button
+                  onClick={handleArchive}
+                  disabled={actionLoading}
+                  className="flex-1 btn btn-outline py-2 flex items-center justify-center gap-1 text-gray-600 text-sm"
+                  title="Archive Activity"
+                >
+                  <Archive className="w-4 h-4" />
+                  <span>Archive</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
