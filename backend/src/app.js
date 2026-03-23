@@ -23,22 +23,25 @@ app.use(cors({
 // Trust proxy (needed for correct IP behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Rate limiting - skip successful requests to avoid counting them
+// Rate limiting - per user ID when authenticated, otherwise per session
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for certain conditions
-  skip: (req) => {
-    // Skip health checks
-    if (req.path === '/health') return true;
-    return false;
-  },
-  // Use a custom key generator that respects X-Forwarded-For
+  // Skip rate limiting for health checks
+  skip: (req) => req.path === '/health',
+  // Use user ID when authenticated, otherwise use a session-based key
   keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress;
+    // If user is authenticated, use their user ID
+    if (req.user?.id) {
+      return req.user.id;
+    }
+    // For unauthenticated requests, combine IP with a session identifier
+    // This prevents one anonymous user from blocking others
+    const sessionKey = req.headers['x-session-id'] || req.ip || 'unknown';
+    return `anon:${sessionKey}`;
   }
 });
 app.use('/api/', limiter);

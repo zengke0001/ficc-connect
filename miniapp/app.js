@@ -6,7 +6,7 @@ App({
     token: null,
     // TODO: Replace with your deployed backend URL before release
     // For local dev use your machine's LAN IP e.g. http://192.168.1.x:3001
-    baseUrl: 'https://cranker.tdxo.cn:8443'
+    baseUrl: 'https://cranker.tdxo.cn:443'
   },
 
   onLaunch() {

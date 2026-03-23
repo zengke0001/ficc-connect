@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { activityAPI } from '../utils/api';
+import { activityAPI, photoAPI } from '../utils/api';
 import { PhotoGrid } from '../components/PhotoGrid';
 import { PhotoViewer } from '../components/PhotoViewer';
 import {
   ArrowLeft, Calendar, Users, Trophy, Flame,
   CheckCircle, LogOut, Camera, Loader2, Image as ImageIcon,
-  Archive, Edit2, X
+  Archive, Edit2, X, Upload
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDateRange, daysRemaining, getInitials, getAvatarColor } from '../utils/helpers';
@@ -26,6 +26,8 @@ export function ActivityDetail() {
   const [viewerIndex, setViewerIndex] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', description: '', cover_image_url: '' });
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
 
   useEffect(() => {
     loadActivity();
@@ -115,18 +117,45 @@ export function ActivityDetail() {
       description: activity.description || '',
       cover_image_url: activity.cover_image_url || ''
     });
+    setCoverFile(null);
+    setCoverPreview(activity.cover_image_url || null);
     setEditModalOpen(true);
   };
 
   const closeEditModal = () => {
     setEditModalOpen(false);
+    setCoverFile(null);
+    setCoverPreview(null);
+  };
+
+  const handleCoverFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setActionLoading(true);
     try {
-      await activityAPI.update(id, editForm);
+      const updates = { ...editForm };
+
+      // Upload new cover photo if selected
+      if (coverFile) {
+        try {
+          const uploadResult = await photoAPI.uploadGeneral(coverFile);
+          updates.cover_image_url = uploadResult.data.photo.url;
+        } catch (uploadError) {
+          console.error('Failed to upload cover image:', uploadError);
+          alert('Failed to upload cover image. Please try again.');
+          setActionLoading(false);
+          return;
+        }
+      }
+
+      await activityAPI.update(id, updates);
       await loadActivity();
       closeEditModal();
       alert('Activity updated successfully');
@@ -436,15 +465,40 @@ export function ActivityDetail() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Cover Image URL
+                  Cover Image
                 </label>
-                <input
-                  type="url"
-                  value={editForm.cover_image_url}
-                  onChange={(e) => setEditForm({ ...editForm, cover_image_url: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                  placeholder="https://..."
-                />
+                {coverPreview && (
+                  <div className="mb-2 relative">
+                    <img
+                      src={coverPreview}
+                      alt="Cover preview"
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCoverFile(null);
+                        setCoverPreview(null);
+                        setEditForm({ ...editForm, cover_image_url: '' });
+                      }}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+                <label className="flex items-center justify-center gap-2 w-full px-3 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                  <Upload className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm text-gray-500">
+                    {coverFile ? coverFile.name : 'Choose new cover photo'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverFileChange}
+                    className="hidden"
+                  />
+                </label>
               </div>
 
               <div className="flex gap-3 pt-4">

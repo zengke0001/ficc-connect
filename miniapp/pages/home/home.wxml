@@ -77,19 +77,27 @@
     <view class="section-title">Quick Actions</view>
     <view class="quick-actions">
       <view class="quick-item" bindtap="goToDiscover">
-        <view class="quick-icon gradient-blue">🔍</view>
+        <view class="quick-icon gradient-blue">
+          <view class="icon icon-search"></view>
+        </view>
         <view class="quick-label">Discover</view>
       </view>
       <view class="quick-item" bindtap="goToCreate">
-        <view class="quick-icon gradient-green">➕</view>
+        <view class="quick-icon gradient-green">
+          <view class="icon icon-plus"></view>
+        </view>
         <view class="quick-label">Create</view>
       </view>
       <view class="quick-item" bindtap="goToGallery">
-        <view class="quick-icon gradient-orange">📸</view>
+        <view class="quick-icon gradient-orange">
+          <view class="icon icon-camera"></view>
+        </view>
         <view class="quick-label">Gallery</view>
       </view>
       <view class="quick-item" bindtap="goToArchived">
-        <view class="quick-icon gradient-purple">📂</view>
+        <view class="quick-icon gradient-purple">
+          <view class="icon icon-folder"></view>
+        </view>
         <view class="quick-label">Archived</view>
       </view>
     </view>
