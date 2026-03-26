@@ -8,15 +8,16 @@ const errorHandler = (err, req, res, next) => {
     method: req.method,
   });
 
-  // Handle specific error types
-  if (err.code === '23505') { // PostgreSQL unique violation
+  // Handle SQLite unique constraint violation
+  if (err.code === 'SQLITE_CONSTRAINT_UNIQUE' || (err.message && err.message.includes('UNIQUE constraint failed'))) {
     return res.status(409).json({
       error: 'Resource already exists',
-      details: err.detail
+      details: err.message
     });
   }
 
-  if (err.code === '23503') { // PostgreSQL foreign key violation
+  // Handle SQLite foreign key constraint violation
+  if (err.code === 'SQLITE_CONSTRAINT_FOREIGNKEY' || (err.message && err.message.includes('FOREIGN KEY constraint failed'))) {
     return res.status(400).json({
       error: 'Referenced resource not found'
     });

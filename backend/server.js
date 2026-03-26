@@ -1,7 +1,7 @@
 require('dotenv').config();
 const app = require('./src/app');
 const logger = require('./src/utils/logger');
-const { pool } = require('./src/config/database');
+const { initDatabase } = require('./src/config/database');
 const fs = require('fs');
 
 // Ensure log directory exists
@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 3001;
 
 const startServer = async () => {
   try {
-    // Test database connection
-    await pool.query('SELECT 1');
+    // Initialize database
+    await initDatabase();
     logger.info('Database connection established');
 
     app.listen(PORT, () => {
@@ -31,6 +31,14 @@ startServer();
 
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
-  await pool.end();
+  const { saveDatabase } = require('./src/config/database');
+  saveDatabase();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  const { saveDatabase } = require('./src/config/database');
+  saveDatabase();
   process.exit(0);
 });

@@ -11,7 +11,7 @@ const optionalAuth = async (req, res, next) => {
     try {
       const token = authHeader.substring(7);
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const result = await query('SELECT id, nickname, avatar_url FROM users WHERE id = $1', [decoded.userId]);
+      const result = await query('SELECT id, nickname, avatar_url FROM users WHERE id = ?', [decoded.userId]);
       if (result.rows.length > 0) req.user = result.rows[0];
     } catch (e) { /* ignore */ }
   }

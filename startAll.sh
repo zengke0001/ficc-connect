@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# FICC Connect - Start All Services (Daemon Mode)
-# This script starts PostgreSQL in Docker and runs the backend as a systemd service
-# Requires sudo privileges for service management
+# FICC Connect - Start All Services (Linux/macOS)
+# This script starts the backend with SQLite (no Docker/PostgreSQL required)
+# Uses sql.js for in-browser/database file storage
 
 set -e
 
@@ -79,103 +79,24 @@ ensure_sudo() {
     sudo -v || exit 1
 }
 
-# Function to check if Docker is running
-check_docker() {
-    # Try without sudo first
-    if docker info > /dev/null 2>&1; then
-        return 0
-    fi
-
-    # Try with sudo
-    if sudo docker info > /dev/null 2>&1; then
-        echo -e "${YELLOW}Note: Docker requires sudo. Consider adding user to docker group:${NC}"
-        echo "  sudo usermod -aG docker \$USER"
-        echo "  (Then log out and back in for changes to take effect)"
-        echo ""
-        # Set a flag to use sudo for docker commands
-        USE_SUDO_DOCKER=true
-        return 0
-    fi
-
-    # Docker not running - try to start it
-    echo -e "${YELLOW}Docker is not running. Attempting to start...${NC}"
-    if command -v systemctl &> /dev/null; then
-        sudo systemctl start docker 2>/dev/null || true
-        sleep 2
-    elif command -v service &> /dev/null; then
-        sudo service docker start 2>/dev/null || true
-        sleep 2
-    fi
-
-    # Check again
-    if docker info > /dev/null 2>&1 || sudo docker info > /dev/null 2>&1; then
-        echo -e "${GREEN}Docker started successfully${NC}"
-        return 0
-    fi
-
-    echo -e "${RED}Error: Docker is not running and could not be started${NC}"
-    echo "Please start Docker manually:"
-    echo "  sudo systemctl start docker"
-    echo "  # or"
-    echo "  sudo service docker start"
-    exit 1
-}
-
-# Helper function to run docker commands (with or without sudo)
-docker_cmd() {
-    if [ "${USE_SUDO_DOCKER:-false}" = true ]; then
-        sudo docker "$@"
+# Function to ensure SQLite database is initialized
+init_sqlite_database() {
+    echo -e "${YELLOW}Initializing SQLite database...${NC}"
+    
+    # Ensure data directory exists
+    mkdir -p "$SCRIPT_DIR/backend/data"
+    
+    # Run migrations
+    cd "$SCRIPT_DIR/backend"
+    if [ -f "node_modules/sql.js/dist/sql-wasm.wasm" ]; then
+        echo -e "${GREEN}SQLite database ready${NC}"
     else
-        docker "$@"
+        echo -e "${YELLOW}Installing backend dependencies first...${NC}"
+        npm install
     fi
-}
-
-# Function to start PostgreSQL
-start_postgres() {
-    echo -e "${YELLOW}Starting PostgreSQL...${NC}"
-
-    # Check if postgres container exists
-    if docker_cmd ps -a --format '{{.Names}}' | grep -q "^ficc-postgres$"; then
-        # Container exists, start it
-        docker_cmd start ficc-postgres > /dev/null
-        echo -e "${GREEN}PostgreSQL container started${NC}"
-    else
-        # Create new container
-        echo "Creating PostgreSQL container..."
-        docker_cmd run -d \
-            --name ficc-postgres \
-            --restart unless-stopped \
-            -e POSTGRES_DB=ficc_connect \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD=postgres \
-            -p 5432:5432 \
-            -v ficc_postgres_data:/var/lib/postgresql/data \
-            postgres:16-alpine > /dev/null
-        echo -e "${GREEN}PostgreSQL container created and started${NC}"
-        sleep 3
-    fi
-
-    # Wait for PostgreSQL to accept connections
-    echo "Checking PostgreSQL connection..."
-    until docker_cmd exec ficc-postgres pg_isready -U postgres > /dev/null 2>&1; do
-        echo -n "."
-        sleep 1
-    done
-    echo ""
-    echo -e "${GREEN}PostgreSQL is ready!${NC}"
-}
-
-# Function to initialize database
-init_database() {
-    echo -e "${YELLOW}Checking database schema...${NC}"
-    if ! docker_cmd exec ficc-postgres psql -U postgres -d ficc_connect -c "SELECT 1 FROM users LIMIT 1" > /dev/null 2>&1; then
-        echo "Database not initialized. Running schema migration..."
-        docker_cmd cp backend/migrations/000_full_schema.sql ficc-postgres:/tmp/
-        docker_cmd exec ficc-postgres psql -U postgres -d ficc_connect -f /tmp/000_full_schema.sql > /dev/null
-        echo -e "${GREEN}Database initialized successfully!${NC}"
-    else
-        echo -e "${GREEN}Database already initialized${NC}"
-    fi
+    
+    node migrations/run.js
+    echo -e "${GREEN}SQLite database initialized!${NC}"
 }
 
 # Function to install dependencies and build
@@ -207,6 +128,7 @@ install_service() {
     # Create installation directory
     sudo mkdir -p "$INSTALL_DIR"
     sudo mkdir -p "$INSTALL_DIR/backend/logs"
+    sudo mkdir -p "$INSTALL_DIR/backend/data"
 
     # Check for .env file
     if [ ! -f "$SCRIPT_DIR/backend/.env" ]; then
@@ -245,9 +167,7 @@ install_service() {
 
 # Function to start the daemon service
 start_daemon() {
-    check_docker
-    start_postgres
-    init_database
+    init_sqlite_database
     prepare_app
     install_service
 
@@ -262,7 +182,7 @@ start_daemon() {
         echo -e "${GREEN}  Services Started Successfully!${NC}"
         echo "====================================="
         echo ""
-        echo -e "${GREEN}PostgreSQL:${NC} localhost:5432"
+        echo -e "${GREEN}Database:${NC}    SQLite (${SCRIPT_DIR}/backend/data/ficc_connect.db)"
         echo -e "${GREEN}Backend API:${NC} http://localhost:3001/api"
         echo -e "${GREEN}PWA App:${NC}   http://localhost:3001/ficc-connect/"
         echo ""
@@ -286,10 +206,7 @@ stop_daemon() {
     echo -e "${YELLOW}Stopping $APP_NAME service...${NC}"
     sudo systemctl stop $SERVICE_NAME 2>/dev/null || true
 
-    echo -e "${YELLOW}Stopping PostgreSQL...${NC}"
-    docker_cmd stop ficc-postgres 2>/dev/null || true
-
-    echo -e "${GREEN}All services stopped${NC}"
+    echo -e "${GREEN}Service stopped${NC}"
 }
 
 # Function to restart the daemon service
@@ -321,11 +238,11 @@ show_status() {
     sudo systemctl status $SERVICE_NAME --no-pager 2>/dev/null || echo -e "${RED}Service not installed${NC}"
 
     echo ""
-    echo -e "${YELLOW}PostgreSQL Status:${NC}"
-    if docker_cmd ps --format '{{.Names}}' | grep -q "^ficc-postgres$"; then
-        echo -e "${GREEN}PostgreSQL container is running${NC}"
+    echo -e "${YELLOW}SQLite Database:${NC}"
+    if [ -f "$SCRIPT_DIR/backend/data/ficc_connect.db" ]; then
+        echo -e "${GREEN}Database file exists${NC}"
     else
-        echo -e "${RED}PostgreSQL container is not running${NC}"
+        echo -e "${YELLOW}Database not initialized yet${NC}"
     fi
 }
 
@@ -361,14 +278,6 @@ uninstall_service() {
         echo -e "${GREEN}Installation directory removed${NC}"
     fi
 
-    # Ask before stopping PostgreSQL
-    read -p "Stop PostgreSQL container? [y/N] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        docker_cmd stop ficc-postgres 2>/dev/null || true
-        echo -e "${GREEN}PostgreSQL stopped${NC}"
-    fi
-
     echo -e "${GREEN}Service uninstalled successfully!${NC}"
 }
 
@@ -377,15 +286,15 @@ run_foreground() {
     echo "====================================="
     echo "  FICC Connect - Starting Services"
     echo "====================================="
-
-    check_docker
+    echo ""
+    echo "Using SQLite database (no Docker required)"
+    echo ""
 
     # Function to cleanup on exit
     cleanup() {
         echo ""
         echo -e "${YELLOW}Shutting down services...${NC}"
-        docker_cmd stop ficc-postgres 2>/dev/null || true
-        echo -e "${GREEN}PostgreSQL stopped${NC}"
+        echo -e "${GREEN}Done${NC}"
     }
 
     # Set trap to cleanup on Ctrl+C (skip if running with nohup)
@@ -393,8 +302,7 @@ run_foreground() {
         trap cleanup SIGINT SIGTERM
     fi
 
-    start_postgres
-    init_database
+    init_sqlite_database
     prepare_app
 
     echo ""
@@ -404,7 +312,7 @@ run_foreground() {
     echo "  Services Started Successfully!"
     echo "====================================="
     echo ""
-    echo -e "${GREEN}PostgreSQL:${NC} localhost:5432"
+    echo -e "${GREEN}Database:${NC}    SQLite (${SCRIPT_DIR}/backend/data/ficc_connect.db)"
     echo -e "${GREEN}Backend API:${NC} http://localhost:3001/api"
     echo -e "${GREEN}PWA App:${NC}   http://localhost:3001/ficc-connect/"
     echo ""

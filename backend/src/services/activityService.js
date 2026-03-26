@@ -9,26 +9,32 @@ class ActivityService {
 
     if (status) {
       params.push(status);
-      whereClauses.push(`a.status = $${params.length}`);
+      whereClauses.push(`a.status = ?`);
     } else if (!include_all) {
       whereClauses.push(`a.status != 'archived'`);
     }
 
     if (my_activities && userId) {
       params.push(userId);
-      whereClauses.push(`ap.user_id = $${params.length}`);
+      whereClauses.push(`ap.user_id = ?`);
     }
 
     if (year) {
       params.push(parseInt(year));
-      whereClauses.push(`EXTRACT(YEAR FROM a.start_date) = $${params.length}`);
+      whereClauses.push(`strftime('%Y', a.start_date) = ?`);
     }
 
     const whereStr = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
     const joinStr = my_activities ? 
       `LEFT JOIN activity_participants ap ON a.id = ap.activity_id` : '';
 
-    params.push(limit, offset);
+    // Build base query params (without limit/offset for count)
+    const queryParams = [...params];
+    
+    // Add limit and offset for main query
+    const limitParam = parseInt(limit) || 10;
+    const offsetParam = parseInt(offset) || 0;
+    queryParams.push(limitParam, offsetParam);
 
     const result = await query(`
       SELECT DISTINCT
@@ -43,15 +49,16 @@ class ActivityService {
       ${whereStr}
       GROUP BY a.id, u.nickname, u.avatar_url
       ORDER BY a.created_at DESC
-      LIMIT $${params.length - 1} OFFSET $${params.length}
-    `, params);
+      LIMIT ? OFFSET ?
+    `, queryParams);
 
+    // Count query - only uses the WHERE params (no limit/offset)
     const countResult = await query(`
       SELECT COUNT(DISTINCT a.id) as total
       FROM activities a
       ${joinStr}
       ${whereStr}
-    `, params.slice(0, -2));
+    `, params);
 
     return {
       activities: result.rows,
@@ -71,7 +78,7 @@ class ActivityService {
       FROM activities a
       JOIN users u ON a.creator_id = u.id
       LEFT JOIN activity_participants ap ON a.id = ap.activity_id
-      WHERE a.id = $1
+      WHERE a.id = ?
       GROUP BY a.id, u.nickname, u.avatar_url
     `, [activityId]);
 
@@ -86,7 +93,7 @@ class ActivityService {
     let userParticipant = null;
     if (userId) {
       const participantResult = await query(
-        'SELECT * FROM activity_participants WHERE activity_id = $1 AND user_id = $2',
+        'SELECT * FROM activity_participants WHERE activity_id = ? AND user_id = ?',
         [activityId, userId]
       );
       isJoined = participantResult.rows.length > 0;
@@ -105,7 +112,7 @@ class ActivityService {
       FROM activity_participants ap
       JOIN users u ON ap.user_id = u.id
       LEFT JOIN teams t ON u.team_id = t.id
-      WHERE ap.activity_id = $1
+      WHERE ap.activity_id = ?
       ORDER BY ap.total_points DESC
     `, [activityId]);
 
@@ -114,7 +121,7 @@ class ActivityService {
       SELECT p.*, u.nickname, u.avatar_url
       FROM photos p
       JOIN users u ON p.user_id = u.id
-      WHERE p.activity_id = $1
+      WHERE p.activity_id = ?
       ORDER BY p.created_at DESC
       LIMIT 6
     `, [activityId]);
@@ -130,6 +137,7 @@ class ActivityService {
   }
 
   async createActivity(userId, activityData) {
+    const { v4: uuidv4 } = require('uuid');
     const {
       title, description, cover_image_url,
       start_date, end_date,
@@ -137,16 +145,16 @@ class ActivityService {
       points_per_checkin, points_per_photo
     } = activityData;
 
+    const activityId = uuidv4();
     const result = await query(`
-      INSERT INTO activities (creator_id, title, description, cover_image_url, start_date, end_date, checkin_start_time, checkin_end_time, points_per_checkin, points_per_photo)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *
-    `, [userId, title, description, cover_image_url, start_date, end_date,
+      INSERT INTO activities (id, creator_id, title, description, cover_image_url, start_date, end_date, checkin_start_time, checkin_end_time, points_per_checkin, points_per_photo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [activityId, userId, title, description, cover_image_url, start_date, end_date,
         checkin_start_time || '06:00', checkin_end_time || '23:59',
         points_per_checkin || 10, points_per_photo || 5
     ]);
 
-    const activity = result.rows[0];
+    const activity = { id: activityId, creator_id: userId, title, description, cover_image_url, start_date, end_date, checkin_start_time: checkin_start_time || '06:00', checkin_end_time: checkin_end_time || '23:59', points_per_checkin: points_per_checkin || 10, points_per_photo: points_per_photo || 5, status: 'active', created_at: new Date().toISOString() };
 
     // Auto-join creator as participant
     await this.joinActivity(activity.id, userId);
@@ -160,7 +168,7 @@ class ActivityService {
   async updateActivity(activityId, userId, updates) {
     // Check if user is the creator
     const activityResult = await query(
-      'SELECT * FROM activities WHERE id = $1',
+      'SELECT * FROM activities WHERE id = ?',
       [activityId]
     );
 
@@ -181,7 +189,7 @@ class ActivityService {
 
     for (const [key, value] of Object.entries(updates)) {
       if (allowedFields.includes(key) && value !== undefined) {
-        setClauses.push(`${key} = $${setClauses.length + 1}`);
+        setClauses.push(`${key} = ?`);
         values.push(value);
       }
     }
@@ -195,18 +203,17 @@ class ActivityService {
     const result = await query(`
       UPDATE activities
       SET ${setClauses.join(', ')}
-      WHERE id = $${values.length}
-      RETURNING *
+      WHERE id = ?
     `, values);
 
     logger.info('Activity updated by creator', { activityId, userId, fields: Object.keys(updates) });
-    return result.rows[0];
+    return await query('SELECT * FROM activities WHERE id = ?', [activityId]).then(r => r.rows[0]);
   }
 
   async joinActivity(activityId, userId) {
     // Check activity exists and is active
     const activityResult = await query(
-      'SELECT * FROM activities WHERE id = $1 AND status = $2',
+      'SELECT * FROM activities WHERE id = ? AND status = ?',
       [activityId, 'active']
     );
     if (activityResult.rows.length === 0) {
@@ -215,33 +222,33 @@ class ActivityService {
 
     // Check not already joined
     const existing = await query(
-      'SELECT id FROM activity_participants WHERE activity_id = $1 AND user_id = $2',
+      'SELECT id FROM activity_participants WHERE activity_id = ? AND user_id = ?',
       [activityId, userId]
     );
     if (existing.rows.length > 0) {
       throw new Error('Already joined this activity');
     }
 
+    const { v4: uuidv4 } = require('uuid');
+    const participantId = uuidv4();
     const result = await query(`
-      INSERT INTO activity_participants (activity_id, user_id)
-      VALUES ($1, $2)
-      RETURNING *
-    `, [activityId, userId]);
+      INSERT INTO activity_participants (id, activity_id, user_id)
+      VALUES (?, ?, ?)
+    `, [participantId, activityId, userId]);
 
     // Award join points
     await this.awardPoints(userId, 5, 'join_activity');
 
-    return result.rows[0];
+    return { id: participantId, activity_id: activityId, user_id: userId, joined_at: new Date().toISOString(), total_checkins: 0, total_points: 0, current_streak: 0, max_streak: 0 };
   }
 
   async leaveActivity(activityId, userId) {
     const result = await query(`
       DELETE FROM activity_participants 
-      WHERE activity_id = $1 AND user_id = $2
-      RETURNING *
+      WHERE activity_id = ? AND user_id = ?
     `, [activityId, userId]);
 
-    if (result.rows.length === 0) {
+    if (result.rowCount === 0) {
       throw new Error('Not a participant of this activity');
     }
 
@@ -250,7 +257,8 @@ class ActivityService {
 
   async getLeaderboard(activityId, type = 'overall', limit = 20) {
     let query_str;
-    const params = [activityId, limit];
+    // Ensure limit is an integer
+    const limitInt = parseInt(limit) || 20;
 
     if (type === 'daily') {
       query_str = `
@@ -262,12 +270,15 @@ class ActivityService {
         FROM activity_participants ap
         JOIN users u ON ap.user_id = u.id
         LEFT JOIN teams t ON u.team_id = t.id
-        LEFT JOIN checkins c ON c.user_id = u.id AND c.activity_id = $1 AND c.checkin_date = CURRENT_DATE
-        WHERE ap.activity_id = $1
+        LEFT JOIN checkins c ON c.user_id = u.id AND c.activity_id = ap.activity_id AND c.checkin_date = date('now')
+        WHERE ap.activity_id = ?
         GROUP BY u.id, u.nickname, u.avatar_url, t.name, t.color
         ORDER BY points DESC, checkin_count DESC
-        LIMIT $2
+        LIMIT ?
       `;
+      const params = [activityId, limitInt];
+      const result = await query(query_str, params);
+      return result.rows;
     } else if (type === 'weekly') {
       query_str = `
         SELECT 
@@ -278,13 +289,16 @@ class ActivityService {
         FROM activity_participants ap
         JOIN users u ON ap.user_id = u.id
         LEFT JOIN teams t ON u.team_id = t.id
-        LEFT JOIN checkins c ON c.user_id = u.id AND c.activity_id = $1 
-          AND c.checkin_date >= date_trunc('week', CURRENT_DATE)
-        WHERE ap.activity_id = $1
+        LEFT JOIN checkins c ON c.user_id = u.id AND c.activity_id = ap.activity_id 
+          AND c.checkin_date >= date('now', 'weekday 0')
+        WHERE ap.activity_id = ?
         GROUP BY u.id, u.nickname, u.avatar_url, t.name, t.color
         ORDER BY points DESC
-        LIMIT $2
+        LIMIT ?
       `;
+      const params = [activityId, limitInt];
+      const result = await query(query_str, params);
+      return result.rows;
     } else {
       // Overall
       query_str = `
@@ -298,35 +312,35 @@ class ActivityService {
         FROM activity_participants ap
         JOIN users u ON ap.user_id = u.id
         LEFT JOIN teams t ON u.team_id = t.id
-        WHERE ap.activity_id = $1
+        WHERE ap.activity_id = ?
         ORDER BY ap.total_points DESC
-        LIMIT $2
+        LIMIT ?
       `;
+      const params = [activityId, limitInt];
+      const result = await query(query_str, params);
+      return result.rows;
     }
-
-    const result = await query(query_str, params);
-    return result.rows;
   }
 
   async archiveCompletedActivities() {
     const result = await query(`
       UPDATE activities
       SET status = 'completed'
-      WHERE status = 'active' AND end_date < CURRENT_DATE
-      RETURNING id, title
+      WHERE status = 'active' AND end_date < date('now')
     `);
 
-    if (result.rows.length > 0) {
-      logger.info(`Archived ${result.rows.length} completed activities`, { activities: result.rows });
+    if (result.rowCount > 0) {
+      const archivedActivities = await query('SELECT id, title FROM activities WHERE status = ?', ['completed']);
+      logger.info(`Archived ${result.rowCount} completed activities`, { activities: archivedActivities.rows });
     }
 
-    return result.rows;
+    return await query("SELECT * FROM activities WHERE status = 'completed'").then(r => r.rows);
   }
 
   async archiveActivity(activityId, userId) {
     // Check if user is the creator
     const activityResult = await query(
-      'SELECT * FROM activities WHERE id = $1',
+      'SELECT * FROM activities WHERE id = ?',
       [activityId]
     );
 
@@ -347,17 +361,16 @@ class ActivityService {
     const result = await query(`
       UPDATE activities
       SET status = 'completed'
-      WHERE id = $1
-      RETURNING *
+      WHERE id = ?
     `, [activityId]);
 
     logger.info('Activity archived by creator', { activityId, userId });
-    return result.rows[0];
+    return await query('SELECT * FROM activities WHERE id = ?', [activityId]).then(r => r.rows[0]);
   }
 
   async awardPoints(userId, points, reason) {
     await query(
-      'UPDATE users SET total_points = total_points + $1 WHERE id = $2',
+      'UPDATE users SET total_points = total_points + ? WHERE id = ?',
       [points, userId]
     );
     logger.debug('Points awarded', { userId, points, reason });

@@ -10,7 +10,7 @@ class CheckinService {
       
       // Verify activity is active and user is participant
       const activityResult = await client.query(
-        'SELECT * FROM activities WHERE id = $1 AND status = $2',
+        'SELECT * FROM activities WHERE id = ? AND status = ?',
         [activityId, 'active']
       );
       if (activityResult.rows.length === 0) {
@@ -19,7 +19,7 @@ class CheckinService {
       const activity = activityResult.rows[0];
 
       const participantResult = await client.query(
-        'SELECT * FROM activity_participants WHERE activity_id = $1 AND user_id = $2',
+        'SELECT * FROM activity_participants WHERE activity_id = ? AND user_id = ?',
         [activityId, userId]
       );
       if (participantResult.rows.length === 0) {
@@ -30,7 +30,7 @@ class CheckinService {
 
       // Prevent duplicate check-in on same day
       const existing = await client.query(
-        'SELECT id FROM checkins WHERE activity_id = $1 AND user_id = $2 AND checkin_date = $3',
+        'SELECT id FROM checkins WHERE activity_id = ? AND user_id = ? AND checkin_date = ?',
         [activityId, userId, today]
       );
       if (existing.rows.length > 0) {
@@ -39,14 +39,16 @@ class CheckinService {
 
       let pointsEarned = activity.points_per_checkin;
 
+      const { v4: uuidv4 } = require('uuid');
+      const checkinId = uuidv4();
+
       // Create check-in record
       const checkinResult = await client.query(`
-        INSERT INTO checkins (activity_id, user_id, checkin_date, comment, points_earned, location_lat, location_lng)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *
-      `, [activityId, userId, today, comment, pointsEarned, location_lat, location_lng]);
+        INSERT INTO checkins (id, activity_id, user_id, checkin_date, comment, points_earned, location_lat, location_lng)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [checkinId, activityId, userId, today, comment, pointsEarned, location_lat, location_lng]);
 
-      const checkin = checkinResult.rows[0];
+      const checkin = { id: checkinId, activity_id: activityId, user_id: userId, checkin_date: today, comment, points_earned: pointsEarned, location_lat, location_lng, checkin_time: new Date().toISOString(), photo_url: null };
 
       // Calculate streak
       const yesterday = new Date();
@@ -54,7 +56,7 @@ class CheckinService {
       const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
       const yesterdayCheckin = await client.query(
-        'SELECT id FROM checkins WHERE activity_id = $1 AND user_id = $2 AND checkin_date = $3',
+        'SELECT id FROM checkins WHERE activity_id = ? AND user_id = ? AND checkin_date = ?',
         [activityId, userId, yesterdayStr]
       );
 
@@ -74,23 +76,23 @@ class CheckinService {
       await client.query(`
         UPDATE activity_participants 
         SET total_checkins = total_checkins + 1,
-            total_points = total_points + $1,
-            current_streak = $2,
-            max_streak = $3
-        WHERE activity_id = $4 AND user_id = $5
+            total_points = total_points + ?,
+            current_streak = ?,
+            max_streak = ?
+        WHERE activity_id = ? AND user_id = ?
       `, [pointsEarned, newStreak, newMaxStreak, activityId, userId]);
 
       // Update user total points and checkin count
       await client.query(`
         UPDATE users 
-        SET total_points = total_points + $1, checkin_count = checkin_count + 1
-        WHERE id = $2
+        SET total_points = total_points + ?, checkin_count = checkin_count + 1
+        WHERE id = ?
       `, [pointsEarned, userId]);
 
       // Update check-in record with final points
       if (streakBonus > 0) {
         await client.query(
-          'UPDATE checkins SET points_earned = $1 WHERE id = $2',
+          'UPDATE checkins SET points_earned = ? WHERE id = ?',
           [pointsEarned, checkin.id]
         );
         checkin.points_earned = pointsEarned;
@@ -131,7 +133,7 @@ class CheckinService {
         a.start_date,
         a.end_date,
         a.status,
-        CASE WHEN c.id IS NOT NULL THEN true ELSE false END as has_checkin,
+        CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END as has_checkin,
         c.id as checkin_id,
         c.photo_url,
         ap.current_streak,
@@ -141,29 +143,33 @@ class CheckinService {
       FROM activity_participants ap
       JOIN activities a ON ap.activity_id = a.id
       LEFT JOIN checkins c ON c.activity_id = ap.activity_id 
-        AND c.user_id = ap.user_id AND c.checkin_date = $1
-      WHERE ap.user_id = $2 AND a.status = 'active'
+        AND c.user_id = ap.user_id AND c.checkin_date = ?
+      WHERE ap.user_id = ? AND a.status = 'active'
       ORDER BY has_checkin ASC, a.created_at DESC
     `, [today, userId]);
 
-    return result.rows;
+    return result.rows.map(row => ({
+      ...row,
+      has_checkin: row.has_checkin === 1
+    }));
   }
 
   async getActivityCheckins(activityId, { date, user_id, page = 1, limit = 20 } = {}) {
     const offset = (page - 1) * limit;
     const params = [activityId];
-    let whereClauses = ['c.activity_id = $1'];
+    let whereClauses = ['c.activity_id = ?'];
 
     if (date) {
       params.push(date);
-      whereClauses.push(`c.checkin_date = $${params.length}`);
+      whereClauses.push(`c.checkin_date = ?`);
     }
     if (user_id) {
       params.push(user_id);
-      whereClauses.push(`c.user_id = $${params.length}`);
+      whereClauses.push(`c.user_id = ?`);
     }
 
-    params.push(limit, offset);
+    // Ensure limit and offset are integers
+    params.push(parseInt(limit) || 20, parseInt(offset) || 0);
 
     const result = await query(`
       SELECT 
@@ -177,7 +183,7 @@ class CheckinService {
       LEFT JOIN photos p ON p.checkin_id = c.id
       WHERE ${whereClauses.join(' AND ')}
       ORDER BY c.checkin_time DESC
-      LIMIT $${params.length - 1} OFFSET $${params.length}
+      LIMIT ? OFFSET ?
     `, params);
 
     return result.rows;
@@ -194,13 +200,13 @@ class CheckinService {
           COUNT(DISTINCT ap.activity_id) as activities_joined,
           (SELECT COUNT(*) FROM photos WHERE user_id = u.id) as photo_count,
           (SELECT COALESCE(SUM(l.count), 0) FROM (
-            SELECT COUNT(*) FROM likes WHERE photo_id IN (
+            SELECT COUNT(*) as count FROM likes WHERE photo_id IN (
               SELECT id FROM photos WHERE user_id = u.id
             )
           ) l) as likes_received
         FROM users u
         LEFT JOIN activity_participants ap ON u.id = ap.user_id
-        WHERE u.id = $1
+        WHERE u.id = ?
         GROUP BY u.id
       `, [userId]);
 
@@ -216,7 +222,7 @@ class CheckinService {
 
       for (const check of checks) {
         const achievementResult = await query(
-          'SELECT * FROM achievements WHERE condition_type = $1 AND condition_value = $2',
+          'SELECT * FROM achievements WHERE condition_type = ? AND condition_value = ?',
           [check.type, check.value]
         );
 
@@ -225,19 +231,21 @@ class CheckinService {
           
           // Check if not already earned
           const existing = await query(
-            'SELECT id FROM user_achievements WHERE user_id = $1 AND achievement_id = $2',
+            'SELECT id FROM user_achievements WHERE user_id = ? AND achievement_id = ?',
             [userId, achievement.id]
           );
 
           if (existing.rows.length === 0) {
+            const { v4: uuidv4 } = require('uuid');
+            const userAchievementId = uuidv4();
             await query(
-              'INSERT INTO user_achievements (user_id, achievement_id) VALUES ($1, $2)',
-              [userId, achievement.id]
+              'INSERT INTO user_achievements (id, user_id, achievement_id) VALUES (?, ?, ?)',
+              [userAchievementId, userId, achievement.id]
             );
 
             if (achievement.points_reward > 0) {
               await query(
-                'UPDATE users SET total_points = total_points + $1 WHERE id = $2',
+                'UPDATE users SET total_points = total_points + ? WHERE id = ?',
                 [achievement.points_reward, userId]
               );
             }

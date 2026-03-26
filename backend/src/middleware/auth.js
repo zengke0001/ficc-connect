@@ -16,7 +16,7 @@ const authMiddleware = async (req, res, next) => {
     
     // Get user from database
     const result = await query(
-      'SELECT id, openid, nickname, avatar_url, team_id, total_points FROM users WHERE id = $1',
+      'SELECT id, openid, nickname, avatar_url, team_id, total_points FROM users WHERE id = ?',
       [decoded.userId]
     );
     

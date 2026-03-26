@@ -1,6 +1,7 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
 
@@ -34,31 +35,32 @@ class AuthService {
       }
 
       // Check if user exists by openid
-      let userResult = await query('SELECT * FROM users WHERE openid = $1', [openid]);
+      let userResult = await query('SELECT * FROM users WHERE openid = ?', [openid]);
       let user = userResult.rows[0];
       let isNewUser = false;
 
       if (!user) {
         // Create new user
         isNewUser = true;
+        const userId = uuidv4();
         userResult = await query(
-          'INSERT INTO users (openid, nickname, avatar_url) VALUES ($1, $2, $3) RETURNING *',
-          [openid, nickname || 'User', avatarUrl || '']
+          'INSERT INTO users (id, openid, nickname, avatar_url) VALUES (?, ?, ?, ?)',
+          [userId, openid, nickname || 'User', avatarUrl || '']
         );
-        user = userResult.rows[0];
-        logger.info('New user created', { userId: user.id, openid });
+        user = { id: userId, openid, nickname: nickname || 'User', avatar_url: avatarUrl || '' };
+        logger.info('New user created', { userId, openid });
       } else {
         // Existing user - only update avatar if provided, keep existing nickname
         logger.info('Existing user found', { userId: user.id, openid });
         if (avatarUrl && avatarUrl !== user.avatar_url) {
           await this.updateProfile(user.id, { avatar_url: avatarUrl });
-          userResult = await query('SELECT * FROM users WHERE id = $1', [user.id]);
+          userResult = await query('SELECT * FROM users WHERE id = ?', [user.id]);
           user = userResult.rows[0];
         }
       }
 
       // Update last active
-      await query('UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+      await query('UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
 
       // Generate JWT
       const token = jwt.sign(
@@ -91,20 +93,21 @@ class AuthService {
     }
 
     const setClause = Object.keys(updates)
-      .map((key, i) => `${key} = $${i + 2}`)
+      .map((key, i) => `${key} = ?`)
       .join(', ');
-    const values = [userId, ...Object.values(updates)];
+    const values = [...Object.values(updates), userId];
 
     const result = await query(
-      `UPDATE users SET ${setClause} WHERE id = $1 RETURNING *`,
+      `UPDATE users SET ${setClause} WHERE id = ?`,
       values
     );
 
-    if (result.rows.length === 0) {
+    if (result.rowCount === 0) {
       throw new Error('User not found');
     }
 
-    return this.sanitizeUser(result.rows[0]);
+    const updatedUser = await query('SELECT * FROM users WHERE id = ?', [userId]);
+    return this.sanitizeUser(updatedUser.rows[0]);
   }
 
   async getProfile(userId) {
@@ -112,7 +115,7 @@ class AuthService {
       SELECT u.*, t.name as team_name, t.color as team_color
       FROM users u
       LEFT JOIN teams t ON u.team_id = t.id
-      WHERE u.id = $1
+      WHERE u.id = ?
     `, [userId]);
 
     if (result.rows.length === 0) {
@@ -126,12 +129,12 @@ class AuthService {
       SELECT 
         COUNT(DISTINCT ap.activity_id) as activities_joined,
         COALESCE(SUM(ap.total_checkins), 0) as total_checkins,
-        COALESCE(MAX(ap.max_streak), 0) as max_streak,
+        MAX(COALESCE(ap.max_streak, 0)) as max_streak,
         COUNT(DISTINCT ua.achievement_id) as achievements_earned
       FROM users u
       LEFT JOIN activity_participants ap ON u.id = ap.user_id
       LEFT JOIN user_achievements ua ON u.id = ua.user_id
-      WHERE u.id = $1
+      WHERE u.id = ?
       GROUP BY u.id
     `, [userId]);
 
@@ -140,7 +143,7 @@ class AuthService {
       SELECT a.*, ua.earned_at
       FROM user_achievements ua
       JOIN achievements a ON ua.achievement_id = a.id
-      WHERE ua.user_id = $1
+      WHERE ua.user_id = ?
       ORDER BY ua.earned_at DESC
     `, [userId]);
 
@@ -160,7 +163,7 @@ class AuthService {
   async login(email) {
     try {
       // Find user by email
-      const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+      const result = await query('SELECT * FROM users WHERE email = ?', [email]);
       const user = result.rows[0];
 
       if (!user) {
@@ -168,7 +171,7 @@ class AuthService {
       }
 
       // Update last active
-      await query('UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
+      await query('UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
 
       // Generate JWT
       const token = jwt.sign(
@@ -198,23 +201,24 @@ class AuthService {
       }
 
       // Check if email already exists
-      const existingResult = await query('SELECT id FROM users WHERE email = $1', [email]);
+      const existingResult = await query('SELECT id FROM users WHERE email = ?', [email]);
       if (existingResult.rows.length > 0) {
         throw new Error('Email already registered');
       }
 
       // Generate a unique openid for PWA users
       const pwaOpenid = `pwa_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      const userId = uuidv4();
 
-      // Create user (no password)
-      const result = await query(
-        `INSERT INTO users (openid, email, nickname, avatar_url)
-         VALUES ($1, $2, $3, $4) RETURNING *`,
-        [pwaOpenid, email, nickname || email.split('@')[0], avatar_url || '']
+      // Create user (no password) - columns match: id, openid, email, nickname, avatar_url
+      await query(
+        `INSERT INTO users (id, openid, email, nickname, avatar_url)
+         VALUES (?, ?, ?, ?, ?)`,
+        [userId, pwaOpenid, email, nickname || email.split('@')[0], avatar_url || '']
       );
 
-      const user = result.rows[0];
-      logger.info('New PWA user created', { userId: user.id, email });
+      const user = { id: userId, openid: pwaOpenid, email, nickname: nickname || email.split('@')[0], avatar_url: avatar_url || '' };
+      logger.info('New PWA user created', { userId, email });
 
       // Generate JWT
       const token = jwt.sign(
@@ -234,7 +238,7 @@ class AuthService {
   }
 
   sanitizeUser(user) {
-    const { openid, password_hash, ...sanitized } = user;
+    const { openid, ...sanitized } = user;
     return sanitized;
   }
 }
