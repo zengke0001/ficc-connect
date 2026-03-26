@@ -60,8 +60,9 @@ class ActivityService {
       ${whereStr}
     `, params);
 
+    const rows = result.rows || [];
     return {
-      activities: result.rows,
+      activities: rows,
       total: parseInt(countResult.rows[0]?.total || 0),
       page,
       limit

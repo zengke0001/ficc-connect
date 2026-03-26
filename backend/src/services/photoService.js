@@ -152,19 +152,12 @@ class PhotoService {
 
   async getActivityPhotos(activityId, { page = 1, limit = 20, userId } = {}) {
     const offset = (page - 1) * limit;
-    const params = [activityId];
-    let userFilter = '';
-    let likeJoin = 'LEFT JOIN likes l ON p.id = l.photo_id AND 0';
-
-    if (userId) {
-      params.push(userId);
-      userFilter = `AND p.user_id = ?`;
-      likeJoin = `LEFT JOIN likes l ON p.id = l.photo_id AND l.user_id = ?`;
-    }
-
-    // Ensure limit and offset are integers
-    params.push(parseInt(limit) || 20, parseInt(offset) || 0);
-
+    
+    // Ensure values are integers
+    const limitInt = parseInt(limit) || 20;
+    const offsetInt = parseInt(offset) || 0;
+    
+    // Simple query - always show all photos for the activity
     const result = await query(`
       SELECT 
         p.*,
@@ -180,9 +173,10 @@ class PhotoService {
       WHERE p.activity_id = ?
       ORDER BY p.created_at DESC
       LIMIT ? OFFSET ?
-    `, [userId || 0, activityId, parseInt(limit) || 20, parseInt(offset) || 0]);
+    `, [userId || 0, activityId, limitInt, offsetInt]);
 
-    return result.rows.map(row => ({
+    const rows = result.rows || [];
+    return rows.map(row => ({
       ...row,
       is_liked: row.is_liked === 1
     }));
