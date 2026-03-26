@@ -43,10 +43,11 @@ export function Profile() {
   };
 
   const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/ficc-connect/register?invite_code=${inviteCode}`;
     const shareData = {
       title: 'Join FICC Connect!',
       text: `Join me on FICC Connect! Use my invite code: ${inviteCode}`,
-      url: `${window.location.origin}/register?invite_code=${inviteCode}`
+      url: shareUrl
     };
 
     if (navigator.share) {
@@ -55,13 +56,13 @@ export function Profile() {
       } catch (err) {
         if (err.name !== 'AbortError') {
           // Fallback to copying link
-          navigator.clipboard.writeText(shareData.url);
+          navigator.clipboard.writeText(shareUrl);
           alert('Share link copied to clipboard!');
         }
       }
     } else {
       // Fallback for browsers without Web Share API
-      navigator.clipboard.writeText(shareData.url);
+      navigator.clipboard.writeText(shareUrl);
       alert('Share link copied to clipboard!');
     }
   };
