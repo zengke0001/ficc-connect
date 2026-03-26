@@ -379,6 +379,37 @@ class ActivityService {
     return await query('SELECT * FROM activities WHERE id = ?', [activityId]).then(r => r.rows[0]);
   }
 
+  async restoreActivity(activityId, userId) {
+    // Check if user is the creator
+    const activityResult = await query(
+      'SELECT * FROM activities WHERE id = ?',
+      [activityId]
+    );
+
+    if (activityResult.rows.length === 0) {
+      throw new Error('Activity not found');
+    }
+
+    const activity = activityResult.rows[0];
+
+    if (activity.creator_id !== userId) {
+      throw new Error('Only the activity creator can restore this activity');
+    }
+
+    if (activity.status !== 'completed') {
+      throw new Error('Activity is not archived');
+    }
+
+    const result = await query(`
+      UPDATE activities
+      SET status = 'active'
+      WHERE id = ?
+    `, [activityId]);
+
+    logger.info('Activity restored by creator', { activityId, userId });
+    return await query('SELECT * FROM activities WHERE id = ?', [activityId]).then(r => r.rows[0]);
+  }
+
   async awardPoints(userId, points, reason) {
     await query(
       'UPDATE users SET total_points = total_points + ? WHERE id = ?',

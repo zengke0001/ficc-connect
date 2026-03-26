@@ -6,7 +6,7 @@ import { PhotoViewer } from '../components/PhotoViewer';
 import {
   ArrowLeft, Calendar, Users, Trophy, Flame,
   CheckCircle, LogOut, Camera, Loader2, Image as ImageIcon,
-  Archive, Edit2, X, Upload
+  Archive, RotateCcw, Edit2, X, Upload
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { formatDateRange, daysRemaining, getInitials, getAvatarColor } from '../utils/helpers';
@@ -103,6 +103,22 @@ export function ActivityDetail() {
     } catch (error) {
       console.error('Failed to archive:', error);
       alert(error.message || 'Failed to archive activity');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!confirm('Are you sure you want to restore this activity? It will become active again.')) return;
+
+    setActionLoading(true);
+    try {
+      await activityAPI.restore(id);
+      loadActivity();
+      alert('Activity restored successfully');
+    } catch (error) {
+      console.error('Failed to restore:', error);
+      alert(error.message || 'Failed to restore activity');
     } finally {
       setActionLoading(false);
     }
@@ -215,24 +231,35 @@ export function ActivityDetail() {
           
           {isCreator && (
             <div className="flex items-center gap-2">
-              {!isArchived && (
+              {isArchived ? (
                 <button
-                  onClick={handleArchive}
+                  onClick={handleRestore}
                   disabled={actionLoading}
-                  className="p-2 bg-black/30 text-white rounded-full hover:bg-black/50"
-                  title="Archive Activity"
+                  className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700"
+                  title="Restore Activity"
                 >
-                  <Archive className="w-4 h-4" />
+                  <RotateCcw className="w-4 h-4" />
                 </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleArchive}
+                    disabled={actionLoading}
+                    className="p-2 bg-black/30 text-white rounded-full hover:bg-black/50"
+                    title="Archive Activity"
+                  >
+                    <Archive className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={openEditModal}
+                    disabled={actionLoading}
+                    className="p-2 bg-black/30 text-white rounded-full hover:bg-black/50"
+                    title="Edit Activity"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                </>
               )}
-              <button
-                onClick={openEditModal}
-                disabled={actionLoading}
-                className="p-2 bg-black/30 text-white rounded-full hover:bg-black/50"
-                title="Edit Activity"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
             </div>
           )}
         </div>

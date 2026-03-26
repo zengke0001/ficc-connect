@@ -105,6 +105,15 @@ class ActivityController {
     }
   }
 
+  async restore(req, res, next) {
+    try {
+      const activity = await activityService.restoreActivity(req.params.id, req.user.id);
+      res.json({ success: true, data: { activity } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async update(req, res, next) {
     try {
       const activity = await activityService.updateActivity(req.params.id, req.user.id, req.body);

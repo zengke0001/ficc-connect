@@ -157,6 +157,7 @@ class CheckinService {
       LEFT JOIN checkins c ON c.activity_id = ap.activity_id 
         AND c.user_id = ap.user_id AND c.checkin_date = ?
       WHERE ap.user_id = ? AND a.status = 'active'
+      GROUP BY ap.activity_id
       ORDER BY has_checkin ASC, a.created_at DESC
     `, [today, userId]);
 

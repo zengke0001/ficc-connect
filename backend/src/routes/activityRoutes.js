@@ -29,6 +29,7 @@ router.get('/:id/leaderboard', activityController.getLeaderboard.bind(activityCo
 router.post('/:id/checkin', auth, activityController.checkin.bind(activityController));
 router.get('/:id/checkins', activityController.getCheckins.bind(activityController));
 router.post('/:id/archive', auth, activityController.archive.bind(activityController));
+router.post('/:id/restore', auth, activityController.restore.bind(activityController));
 router.put('/:id', auth, activityController.update.bind(activityController));
 
 module.exports = router;
