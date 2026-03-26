@@ -19,6 +19,11 @@ SERVICE_NAME="ficc-connect.service"
 INSTALL_DIR="/opt/ficc-connect"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Change to script directory
+cd "$SCRIPT_DIR"
+
+echo "Starting FICC Connect from: $SCRIPT_DIR"
+
 # Parse arguments
 DAEMON_MODE=false
 STOP_MODE=false
