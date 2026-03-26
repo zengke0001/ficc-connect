@@ -14,7 +14,8 @@ export function CreateActivity() {
     description: '',
     start_date: '',
     end_date: '',
-    cover_image: null
+    cover_image: null,
+    allow_multiple_checkins: false
   });
 
   const handleCoverSelect = (e) => {
@@ -79,7 +80,8 @@ export function CreateActivity() {
         description: formData.description.trim(),
         start_date: formData.start_date,
         end_date: formData.end_date,
-        cover_image_url
+        cover_image_url,
+        allow_multiple_checkins: formData.allow_multiple_checkins
       };
 
       const result = await activityAPI.create(data);
@@ -216,6 +218,29 @@ export function CreateActivity() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Multiple Check-ins Toggle */}
+          <div className="card p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-gray-900">Allow Multiple Check-ins</h3>
+                <p className="text-sm text-gray-500 mt-1">Allow checking in multiple times per day</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, allow_multiple_checkins: !formData.allow_multiple_checkins })}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  formData.allow_multiple_checkins ? 'bg-primary' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    formData.allow_multiple_checkins ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
             </div>
           </div>
 

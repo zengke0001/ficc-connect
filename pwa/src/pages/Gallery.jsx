@@ -32,24 +32,14 @@ export function Gallery() {
   const loadActivities = async () => {
     setLoading(true);
     try {
-      const params = { limit: 50, include_all: 'true' };
+      // Get all activities - just show them all, individual pages will show photos
+      const params = { limit: 100, include_all: 'true' };
       if (statusFilter) params.status = statusFilter;
       if (yearFilter) params.year = yearFilter;
 
       const result = await activityAPI.list(params);
-      // Filter to only show activities with photos (fetched sequentially to avoid rate limit)
-      const activitiesWithPhotos = [];
-      for (const activity of result.data.activities || []) {
-        try {
-          const photoResult = await photoAPI.getActivityPhotos(activity.id, { limit: 1 });
-          if (photoResult.data.photos?.length > 0) {
-            activitiesWithPhotos.push(activity);
-          }
-        } catch (e) {
-          // Skip activities that fail to load photos
-        }
-      }
-      setActivities(activitiesWithPhotos);
+      console.log('Gallery activities:', result.data.activities);
+      setActivities(result.data.activities || []);
     } catch (error) {
       console.error('Failed to load activities:', error);
     } finally {
@@ -146,6 +136,7 @@ function ActivityGalleryPreview({ activity }) {
   const loadPhotos = async () => {
     try {
       const result = await photoAPI.getActivityPhotos(activity.id, { limit: 4 });
+      console.log('Photos for', activity.id, ':', result);
       setPhotos(result.data.photos || []);
     } catch (error) {
       console.error('Failed to load photos:', error);

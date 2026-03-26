@@ -130,7 +130,9 @@ class AuthService {
         COUNT(DISTINCT ap.activity_id) as activities_joined,
         COALESCE(SUM(ap.total_checkins), 0) as total_checkins,
         MAX(COALESCE(ap.max_streak, 0)) as max_streak,
-        COUNT(DISTINCT ua.achievement_id) as achievements_earned
+        COUNT(DISTINCT ua.achievement_id) as achievements_earned,
+        (SELECT COUNT(*) FROM photos WHERE user_id = u.id) as photos_uploaded,
+        COALESCE(u.total_points, 0) as total_points
       FROM users u
       LEFT JOIN activity_participants ap ON u.id = ap.user_id
       LEFT JOIN user_achievements ua ON u.id = ua.user_id

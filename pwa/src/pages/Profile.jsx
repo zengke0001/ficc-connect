@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { authAPI } from '../utils/api';
 import {
   User, Award, Flame, Camera, LogOut,
-  ChevronRight, Edit2, Trophy, Activity, KeyRound, Copy, Check
+  ChevronRight, Edit2, Trophy, Activity, KeyRound, Share2
 } from 'lucide-react';
 
 export function Profile() {
@@ -12,7 +12,6 @@ export function Profile() {
   const [stats, setStats] = useState(null);
   const [achievements, setAchievements] = useState([]);
   const [inviteCode, setInviteCode] = useState('');
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editNickname, setEditNickname] = useState('');
@@ -43,11 +42,28 @@ export function Profile() {
     }
   };
 
-  const handleCopyInviteCode = () => {
-    navigator.clipboard.writeText(inviteCode).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Join FICC Connect!',
+      text: `Join me on FICC Connect! Use my invite code: ${inviteCode}`,
+      url: `${window.location.origin}/register?invite_code=${inviteCode}`
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          // Fallback to copying link
+          navigator.clipboard.writeText(shareData.url);
+          alert('Share link copied to clipboard!');
+        }
+      }
+    } else {
+      // Fallback for browsers without Web Share API
+      navigator.clipboard.writeText(shareData.url);
+      alert('Share link copied to clipboard!');
+    }
   };
 
   const handleEdit = () => {
@@ -214,20 +230,11 @@ export function Profile() {
               {inviteCode}
             </span>
             <button
-              onClick={handleCopyInviteCode}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors"
+              onClick={handleShare}
+              className="flex items-center gap-1.5 text-sm px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
             >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-green-500">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  <span>Copy</span>
-                </>
-              )}
+              <Share2 className="w-4 h-4" />
+              <span>Share</span>
             </button>
           </div>
           <p className="text-xs text-gray-400 mt-2">Share this code with colleagues to invite them</p>

@@ -25,7 +25,7 @@ export function ActivityDetail() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', description: '', cover_image_url: '' });
+  const [editForm, setEditForm] = useState({ title: '', description: '', cover_image_url: '', allow_multiple_checkins: false });
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
 
@@ -115,7 +115,8 @@ export function ActivityDetail() {
     setEditForm({
       title: activity.title,
       description: activity.description || '',
-      cover_image_url: activity.cover_image_url || ''
+      cover_image_url: activity.cover_image_url || '',
+      allow_multiple_checkins: activity.allow_multiple_checkins === 1 || activity.allow_multiple_checkins === true
     });
     setCoverFile(null);
     setCoverPreview(activity.cover_image_url || null);
@@ -188,21 +189,8 @@ export function ActivityDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="sticky top-0 bg-white shadow-sm z-10">
-        <div className="flex items-center gap-3 px-4 h-14">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 -ml-2 hover:bg-gray-100 rounded-lg"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="font-semibold text-gray-900 truncate">{activity.title}</h1>
-        </div>
-      </div>
-
-      {/* Cover */}
-      <div className="relative h-48 bg-gray-200">
+      {/* Cover with Header Buttons */}
+      <div className="relative h-48">
         {activity.cover_image_url ? (
           <img
             src={activity.cover_image_url}
@@ -210,14 +198,49 @@ export function ActivityDetail() {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-            <Flame className="w-16 h-16 text-primary/50" />
+          <div className="w-full h-full bg-gradient-to-br from-primary/40 to-primary/60 flex items-center justify-center">
+            <Flame className="w-20 h-20 text-white/50" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4 text-white">
-          <h2 className="text-2xl font-bold">{activity.title}</h2>
-          <div className="flex items-center gap-4 mt-2 text-sm">
+        
+        {/* Top Bar with Actions */}
+        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 bg-black/30 text-white rounded-full hover:bg-black/50"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          
+          {isCreator && (
+            <div className="flex items-center gap-2">
+              {!isArchived && (
+                <button
+                  onClick={handleArchive}
+                  disabled={actionLoading}
+                  className="p-2 bg-black/30 text-white rounded-full hover:bg-black/50"
+                  title="Archive Activity"
+                >
+                  <Archive className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={openEditModal}
+                disabled={actionLoading}
+                className="p-2 bg-black/30 text-white rounded-full hover:bg-black/50"
+                title="Edit Activity"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+        
+        {/* Activity Title */}
+        <div className="absolute bottom-4 left-4 right-4">
+          <h1 className="text-xl font-bold text-white">{activity.title}</h1>
+          <div className="flex items-center gap-4 mt-1 text-sm text-white/80">
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               {formatDateRange(activity.start_date, activity.end_date)}
@@ -234,7 +257,14 @@ export function ActivityDetail() {
       <div className="page-container">
         {/* Description */}
         <div className="card p-4 mb-4">
-          <h3 className="font-semibold text-gray-900 mb-2">About</h3>
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="font-semibold text-gray-900">About</h3>
+            {activity.allow_multiple_checkins && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                🔁 Multi Check-in
+              </span>
+            )}
+          </div>
           <p className="text-gray-600">
             {activity.description || 'No description provided.'}
           </p>
@@ -358,8 +388,8 @@ export function ActivityDetail() {
         {/* Action Buttons */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t md:relative md:bg-transparent md:border-0 md:p-0">
           {!isArchived ? (
-            // Active activity buttons
-            isJoined ? (
+            // Active activity buttons - show check-in for both joined and creator
+            isJoined || isCreator ? (
               <div className="flex gap-3">
                 <button
                   onClick={handleCheckin}
@@ -368,13 +398,15 @@ export function ActivityDetail() {
                   <Camera className="w-5 h-5" />
                   Check In
                 </button>
-                <button
-                  onClick={handleLeave}
-                  disabled={actionLoading}
-                  className="btn btn-outline py-3 px-4"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
+                {!isCreator && (
+                  <button
+                    onClick={handleLeave}
+                    disabled={actionLoading}
+                    className="btn btn-outline py-3 px-4"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                )}
               </div>
             ) : (
               <button
@@ -386,32 +418,6 @@ export function ActivityDetail() {
               </button>
             )
           ) : null}
-
-          {/* Creator action buttons */}
-          {isCreator && (
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={openEditModal}
-                disabled={actionLoading}
-                className="flex-1 btn btn-outline py-2 flex items-center justify-center gap-1 text-gray-600 text-sm"
-                title="Edit Activity"
-              >
-                <Edit2 className="w-4 h-4" />
-                <span>Edit</span>
-              </button>
-              {!isArchived && (
-                <button
-                  onClick={handleArchive}
-                  disabled={actionLoading}
-                  className="flex-1 btn btn-outline py-2 flex items-center justify-center gap-1 text-gray-600 text-sm"
-                  title="Archive Activity"
-                >
-                  <Archive className="w-4 h-4" />
-                  <span>Archive</span>
-                </button>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -499,6 +505,27 @@ export function ActivityDetail() {
                     className="hidden"
                   />
                 </label>
+              </div>
+
+              {/* Allow Multiple Check-ins Toggle */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <h4 className="font-medium text-gray-900">Allow Multiple Check-ins</h4>
+                  <p className="text-sm text-gray-500">Allow checking in multiple times per day</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditForm({ ...editForm, allow_multiple_checkins: !editForm.allow_multiple_checkins })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    editForm.allow_multiple_checkins ? 'bg-primary' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      editForm.allow_multiple_checkins ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
               </div>
 
               <div className="flex gap-3 pt-4">

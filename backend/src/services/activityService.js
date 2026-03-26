@@ -88,16 +88,22 @@ class ActivityService {
 
     const activity = result.rows[0];
 
-    // Check if user has joined
+    // Check if user has joined (or is the creator)
     let isJoined = false;
     let userParticipant = null;
     if (userId) {
-      const participantResult = await query(
-        'SELECT * FROM activity_participants WHERE activity_id = ? AND user_id = ?',
-        [activityId, userId]
-      );
-      isJoined = participantResult.rows.length > 0;
-      userParticipant = participantResult.rows[0];
+      // Check if user is the creator
+      if (activity.creator_id === userId) {
+        isJoined = true;
+      } else {
+        // Check if user is in participants table
+        const participantResult = await query(
+          'SELECT * FROM activity_participants WHERE activity_id = ? AND user_id = ?',
+          [activityId, userId]
+        );
+        isJoined = participantResult.rows.length > 0;
+        userParticipant = participantResult.rows[0];
+      }
     }
 
     // Get top 5 leaderboard
@@ -142,19 +148,21 @@ class ActivityService {
       title, description, cover_image_url,
       start_date, end_date,
       checkin_start_time, checkin_end_time,
-      points_per_checkin, points_per_photo
+      points_per_checkin, points_per_photo,
+      allow_multiple_checkins
     } = activityData;
 
     const activityId = uuidv4();
     const result = await query(`
-      INSERT INTO activities (id, creator_id, title, description, cover_image_url, start_date, end_date, checkin_start_time, checkin_end_time, points_per_checkin, points_per_photo)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO activities (id, creator_id, title, description, cover_image_url, start_date, end_date, checkin_start_time, checkin_end_time, points_per_checkin, points_per_photo, allow_multiple_checkins)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [activityId, userId, title, description, cover_image_url, start_date, end_date,
         checkin_start_time || '06:00', checkin_end_time || '23:59',
-        points_per_checkin || 10, points_per_photo || 5
+        points_per_checkin || 10, points_per_photo || 5,
+        allow_multiple_checkins ? 1 : 0
     ]);
 
-    const activity = { id: activityId, creator_id: userId, title, description, cover_image_url, start_date, end_date, checkin_start_time: checkin_start_time || '06:00', checkin_end_time: checkin_end_time || '23:59', points_per_checkin: points_per_checkin || 10, points_per_photo: points_per_photo || 5, status: 'active', created_at: new Date().toISOString() };
+    const activity = { id: activityId, creator_id: userId, title, description, cover_image_url, start_date, end_date, checkin_start_time: checkin_start_time || '06:00', checkin_end_time: checkin_end_time || '23:59', points_per_checkin: points_per_checkin || 10, points_per_photo: points_per_photo || 5, allow_multiple_checkins: allow_multiple_checkins ? 1 : 0, status: 'active', created_at: new Date().toISOString() };
 
     // Auto-join creator as participant
     await this.joinActivity(activity.id, userId);
@@ -183,14 +191,16 @@ class ActivityService {
     }
 
     // Build update query dynamically
-    const allowedFields = ['title', 'description', 'cover_image_url'];
+    const allowedFields = ['title', 'description', 'cover_image_url', 'allow_multiple_checkins'];
     const setClauses = [];
     const values = [];
 
     for (const [key, value] of Object.entries(updates)) {
-      if (allowedFields.includes(key) && value !== undefined) {
+      if (allowedFields.includes(key)) {
+        // Convert boolean to integer for SQLite
+        const dbValue = typeof value === 'boolean' ? (value ? 1 : 0) : value;
         setClauses.push(`${key} = ?`);
-        values.push(value);
+        values.push(dbValue);
       }
     }
 
@@ -226,7 +236,8 @@ class ActivityService {
       [activityId, userId]
     );
     if (existing.rows.length > 0) {
-      throw new Error('Already joined this activity');
+      // Already joined - return success silently
+      return { id: existing.rows[0].id, activity_id: activityId, user_id: userId, joined_at: existing.rows[0].joined_at, already_joined: true };
     }
 
     const { v4: uuidv4 } = require('uuid');

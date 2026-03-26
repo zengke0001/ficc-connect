@@ -28,13 +28,25 @@ class CheckinService {
 
       const today = new Date().toISOString().slice(0, 10);
 
-      // Prevent duplicate check-in on same day
+      // Check if already checked in today
       const existing = await client.query(
         'SELECT id FROM checkins WHERE activity_id = ? AND user_id = ? AND checkin_date = ?',
         [activityId, userId, today]
       );
       if (existing.rows.length > 0) {
-        throw new Error('Already checked in today for this activity');
+        // If allow_multiple_checkins is false, return success without creating new record
+        if (!activity.allow_multiple_checkins) {
+          await client.query('COMMIT');
+          return { 
+            id: existing.rows[0].id, 
+            activity_id: activityId, 
+            user_id: userId, 
+            checkin_date: today, 
+            already_checked_in: true,
+            message: 'Already checked in today'
+          };
+        }
+        // If allow_multiple_checkins is true, allow multiple check-ins (continue below)
       }
 
       let pointsEarned = activity.points_per_checkin;

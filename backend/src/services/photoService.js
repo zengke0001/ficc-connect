@@ -176,11 +176,11 @@ class PhotoService {
       JOIN users u ON p.user_id = u.id
       LEFT JOIN teams t ON u.team_id = t.id
       LEFT JOIN checkins c ON p.checkin_id = c.id
-      ${likeJoin}
-      WHERE p.activity_id = ? ${userFilter}
+      LEFT JOIN likes l ON p.id = l.photo_id AND l.user_id = ?
+      WHERE p.activity_id = ?
       ORDER BY p.created_at DESC
       LIMIT ? OFFSET ?
-    `, params);
+    `, [userId || 0, activityId, parseInt(limit) || 20, parseInt(offset) || 0]);
 
     return result.rows.map(row => ({
       ...row,
@@ -241,16 +241,7 @@ class PhotoService {
   }
 
   async getActivityGallery(activityId, userId) {
-    // Build the like check join based on whether user is authenticated
-    let likeJoin = 'LEFT JOIN likes l ON p.id = l.photo_id AND 0';
-    const params = [activityId];
-    
-    if (userId) {
-      params.push(userId);
-      likeJoin = `LEFT JOIN likes l ON p.id = l.photo_id AND l.user_id = ?`;
-    }
-
-    // Get all photos for completed activity
+    // Always get all photos - just track is_liked for current user
     const photosResult = await query(`
       SELECT 
         p.*,
@@ -260,10 +251,10 @@ class PhotoService {
       FROM photos p
       JOIN users u ON p.user_id = u.id
       LEFT JOIN teams t ON u.team_id = t.id
-      ${likeJoin}
+      LEFT JOIN likes l ON p.id = l.photo_id AND l.user_id = ?
       WHERE p.activity_id = ?
       ORDER BY p.likes_count DESC, p.created_at DESC
-    `, params);
+    `, [userId || 0, activityId]);
 
     // Get leaderboard (winners)
     const winnersResult = await query(`

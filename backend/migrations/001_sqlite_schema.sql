@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS activities (
     points_per_checkin  INTEGER DEFAULT 10,
     points_per_photo    INTEGER DEFAULT 5,
     allow_late_checkin  INTEGER DEFAULT 0,  -- BOOLEAN as INTEGER (0/1)
+    allow_multiple_checkins INTEGER DEFAULT 0,  -- BOOLEAN as INTEGER (0/1)
     created_at          DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -77,8 +78,8 @@ CREATE TABLE IF NOT EXISTS checkins (
     comment       TEXT,
     points_earned INTEGER DEFAULT 0,
     location_lat  REAL,
-    location_lng  REAL,
-    UNIQUE(activity_id, user_id, checkin_date)
+    location_lng  REAL
+    -- Note: UNIQUE(activity_id, user_id, checkin_date) removed to support multiple check-ins
 );
 
 -- Photos
