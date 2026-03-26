@@ -134,36 +134,43 @@ install_service() {
 
     echo -e "${YELLOW}Installing systemd service...${NC}"
 
-    # Create installation directory
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo mkdir -p "$INSTALL_DIR/backend/logs"
-    sudo mkdir -p "$INSTALL_DIR/backend/data"
+    # Check if already installed in current directory
+    if [ "$SCRIPT_DIR" = "$INSTALL_DIR" ]; then
+        echo -e "${GREEN}Already in installation directory. Skipping file copy.${NC}"
+        # Just copy service file
+        sudo cp "$SCRIPT_DIR/deploy/$SERVICE_NAME" /etc/systemd/system/
+    else
+        # Create installation directory
+        sudo mkdir -p "$INSTALL_DIR"
+        sudo mkdir -p "$INSTALL_DIR/backend/logs"
+        sudo mkdir -p "$INSTALL_DIR/backend/data"
 
-    # Check for .env file
-    if [ ! -f "$SCRIPT_DIR/backend/.env" ]; then
-        echo -e "${YELLOW}Warning: backend/.env file not found.${NC}"
-        if [ -f "$SCRIPT_DIR/backend/.env.example" ]; then
-            echo "Copying .env.example to .env..."
-            cp "$SCRIPT_DIR/backend/.env.example" "$SCRIPT_DIR/backend/.env"
-            echo -e "${YELLOW}Please edit $INSTALL_DIR/backend/.env with your configuration${NC}"
-        else
-            echo -e "${RED}Error: No .env or .env.example found. Please create backend/.env manually.${NC}"
-            exit 1
+        # Check for .env file
+        if [ ! -f "$SCRIPT_DIR/backend/.env" ]; then
+            echo -e "${YELLOW}Warning: backend/.env file not found.${NC}"
+            if [ -f "$SCRIPT_DIR/backend/.env.example" ]; then
+                echo "Copying .env.example to .env..."
+                cp "$SCRIPT_DIR/backend/.env.example" "$SCRIPT_DIR/backend/.env"
+                echo -e "${YELLOW}Please edit $INSTALL_DIR/backend/.env with your configuration${NC}"
+            else
+                echo -e "${RED}Error: No .env or .env.example found. Please create backend/.env manually.${NC}"
+                exit 1
+            fi
         fi
+
+        # Copy application files
+        echo "Copying application files to $INSTALL_DIR..."
+        sudo cp -r "$SCRIPT_DIR/backend" "$INSTALL_DIR/"
+        sudo cp -r "$SCRIPT_DIR/pwa" "$INSTALL_DIR/"
+        sudo cp -r "$SCRIPT_DIR/.qoder" "$INSTALL_DIR/" 2>/dev/null || true
+
+        # Copy service file
+        sudo cp "$SCRIPT_DIR/deploy/$SERVICE_NAME" /etc/systemd/system/
+
+        # Set proper permissions
+        sudo chown -R root:root "$INSTALL_DIR"
+        sudo chmod 600 "$INSTALL_DIR/backend/.env"
     fi
-
-    # Copy application files
-    echo "Copying application files to $INSTALL_DIR..."
-    sudo cp -r "$SCRIPT_DIR/backend" "$INSTALL_DIR/"
-    sudo cp -r "$SCRIPT_DIR/pwa" "$INSTALL_DIR/"
-    sudo cp -r "$SCRIPT_DIR/.qoder" "$INSTALL_DIR/" 2>/dev/null || true
-
-    # Copy service file
-    sudo cp "$SCRIPT_DIR/deploy/$SERVICE_NAME" /etc/systemd/system/
-
-    # Set proper permissions
-    sudo chown -R root:root "$INSTALL_DIR"
-    sudo chmod 600 "$INSTALL_DIR/backend/.env"
 
     # Reload systemd
     sudo systemctl daemon-reload
