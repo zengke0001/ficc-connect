@@ -81,14 +81,15 @@ ensure_sudo() {
 
 # Function to ensure SQLite database is initialized
 init_sqlite_database() {
+    local script_dir="$1"
     echo -e "${YELLOW}Initializing SQLite database...${NC}"
     
     # Ensure data directory exists
-    mkdir -p "$SCRIPT_DIR/backend/data"
+    mkdir -p "$script_dir/backend/data"
     
     # Run migrations
-    cd "$SCRIPT_DIR/backend"
-    if [ -f "node_modules/sql.js/dist/sql-wasm.wasm" ]; then
+    cd "$script_dir/backend" || exit 1
+    if [ -f "node_modules/sql.js/dist/sql-wasm.wasm" ] || [ -f "node_modules/sql.js/dist/sql-wasm.js" ]; then
         echo -e "${GREEN}SQLite database ready${NC}"
     else
         echo -e "${YELLOW}Installing backend dependencies first...${NC}"
@@ -97,6 +98,9 @@ init_sqlite_database() {
     
     node migrations/run.js
     echo -e "${GREEN}SQLite database initialized!${NC}"
+    
+    # Return to original directory
+    cd "$script_dir" || exit 1
 }
 
 # Function to install dependencies and build
@@ -167,7 +171,7 @@ install_service() {
 
 # Function to start the daemon service
 start_daemon() {
-    init_sqlite_database
+    init_sqlite_database "$SCRIPT_DIR"
     prepare_app
     install_service
 
@@ -302,7 +306,7 @@ run_foreground() {
         trap cleanup SIGINT SIGTERM
     fi
 
-    init_sqlite_database
+    init_sqlite_database "$SCRIPT_DIR"
     prepare_app
 
     echo ""
