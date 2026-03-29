@@ -165,19 +165,19 @@ export function Leaderboard() {
           </div>
         )}
 
-        {/* List */}
+        {/* Leaderboard List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : leaderboard.length > 0 ? (
           <div className="space-y-2">
-            {leaderboard.slice(3).map((entry, index) => (
+            {leaderboard.map((entry, index) => (
               <div
                 key={entry.user_id}
-                className={`flex items-center gap-3 p-3 rounded-lg border ${getRankStyle(entry.rank || index + 4)}`}
+                className={`flex items-center gap-3 p-3 rounded-lg border ${getRankStyle(entry.rank || index + 1)}`}
               >
-                {getRankIcon(entry.rank || index + 4)}
+                {getRankIcon(entry.rank || index + 1)}
 
                 {entry.avatar_url ? (
                   <img

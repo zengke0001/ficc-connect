@@ -3,32 +3,46 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ActivityCard } from '../components/ActivityCard';
 import { activityAPI } from '../utils/api';
-import { Flame, Plus, Archive, ChevronRight, Trophy } from 'lucide-react';
-import { getStreakFlame } from '../utils/helpers';
+import { Flame, Plus, Archive, ChevronRight } from 'lucide-react';
 
 export function Home() {
   const { user } = useAuth();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [maxStreak, setMaxStreak] = useState(0);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    loadTodayStatus();
+    loadActivities(true);
   }, []);
 
-  const loadTodayStatus = async () => {
-    try {
-      const result = await activityAPI.getTodayStatus();
-      const acts = (result.data.activities || []).map(a => ({
-        ...a,
-        id: a.activity_id  // ActivityCard expects 'id'
-      }));
-      setActivities(acts);
+  const loadActivities = async (reset = false) => {
+    const currentPage = reset ? 1 : page;
 
-      const max = acts.reduce((m, a) => Math.max(m, a.current_streak || 0), 0);
-      setMaxStreak(max);
+    try {
+      const result = await activityAPI.list({
+        status: 'active',
+        page: currentPage,
+        limit: 10
+      });
+
+      const newActivities = (result.data.activities || []).map(a => ({
+        ...a,
+        id: a.activity_id
+      }));
+
+      if (reset) {
+        setActivities(newActivities);
+      } else {
+        setActivities(prev => [...prev, ...newActivities]);
+      }
+
+      setHasMore(newActivities.length === 10);
+      if (!reset) {
+        setPage(currentPage + 1);
+      }
     } catch (error) {
-      console.error('Failed to load today status:', error);
+      console.error('Failed to load activities:', error);
     } finally {
       setLoading(false);
     }
@@ -52,23 +66,10 @@ export function Home() {
           )}
           <div>
             <h1 className="text-xl font-bold text-gray-900">Hello, {user?.nickname || 'Guest'}</h1>
-            <p className="text-sm text-gray-500">Keep the streak alive!</p>
+            <p className="text-sm text-gray-500">Discover activities around you!</p>
           </div>
         </div>
       </div>
-
-      {/* Streak Card */}
-      {maxStreak > 0 && (
-        <div className="card p-4 mb-6 bg-gradient-to-r from-orange-50 to-red-50 border-orange-100">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">{getStreakFlame(maxStreak)}</div>
-            <div>
-              <p className="text-sm text-gray-600">Current Streak</p>
-              <p className="text-2xl font-bold text-gray-900">{maxStreak} days</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -93,10 +94,10 @@ export function Home() {
         </Link>
       </div>
 
-      {/* My Activities */}
+      {/* Activities */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">My Activities</h2>
+          <h2 className="text-lg font-bold text-gray-900">Activities</h2>
           <Link
             to="/activities"
             className="text-sm text-primary font-medium flex items-center gap-1"
@@ -114,14 +115,22 @@ export function Home() {
           </div>
         ) : activities.length > 0 ? (
           <div className="space-y-3">
-            {activities.map((activity) => (
+            {activities.slice(0, 5).map((activity) => (
               <ActivityCard
-                key={activity.activity_id}
+                key={activity.id}
                 activity={activity}
                 showStreak={true}
                 streak={activity.current_streak}
               />
             ))}
+            {hasMore && (
+              <Link
+                to="/activities"
+                className="block w-full py-3 text-center text-primary font-medium hover:bg-primary/5 rounded-lg transition-colors"
+              >
+                View all activities
+              </Link>
+            )}
           </div>
         ) : (
           <div className="card p-8 text-center">
@@ -130,36 +139,13 @@ export function Home() {
             </div>
             <h3 className="font-medium text-gray-900 mb-1">No active activities</h3>
             <p className="text-sm text-gray-500 mb-4">
-              Join or create an activity to get started
+              Be the first to create an activity!
             </p>
-            <Link to="/activities" className="btn btn-primary">
-              Discover Activities
+            <Link to="/activities/new" className="btn btn-primary">
+              Create Activity
             </Link>
           </div>
         )}
-      </div>
-
-      {/* Quick Stats */}
-      <div className="card p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
-              <Trophy className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">This Month</p>
-              <p className="font-medium text-gray-900">
-                {activities.reduce((sum, a) => sum + (a.total_checkins || 0), 0)} check-ins
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/leaderboard"
-            className="text-sm text-primary font-medium"
-          >
-            View Rankings
-          </Link>
-        </div>
       </div>
     </div>
   );

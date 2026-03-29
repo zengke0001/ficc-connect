@@ -11,7 +11,8 @@ export function Activities() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
 
-  const tab = searchParams.get('status') === 'archived' ? 'archived' : 'active';
+  const tab = searchParams.get('status') === 'archived' ? 'archived' : 
+    searchParams.get('status') === 'my' ? 'my' : 'active';
 
   useEffect(() => {
     setPage(1);
@@ -22,12 +23,21 @@ export function Activities() {
     const currentPage = reset ? 1 : page;
 
     try {
-      const status = tab === 'archived' ? 'completed' : 'active';
-      const result = await activityAPI.list({
-        status,
+      const params = {
         page: currentPage,
         limit: 10
-      });
+      };
+
+      if (tab === 'my') {
+        params.created_by = 'me';
+        params.status = 'active';
+      } else if (tab === 'archived') {
+        params.status = 'completed';
+      } else {
+        params.status = 'active';
+      }
+
+      const result = await activityAPI.list(params);
 
       const newActivities = result.data.activities || [];
 
@@ -50,7 +60,13 @@ export function Activities() {
 
   const switchTab = (newTab) => {
     if (newTab === tab) return;
-    setSearchParams(newTab === 'archived' ? { status: 'archived' } : {});
+    if (newTab === 'my') {
+      setSearchParams({ status: 'my' });
+    } else if (newTab === 'archived') {
+      setSearchParams({ status: 'archived' });
+    } else {
+      setSearchParams({});
+    }
   };
 
   return (
@@ -70,6 +86,16 @@ export function Activities() {
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button
+          onClick={() => switchTab('my')}
+          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+            tab === 'my'
+              ? 'bg-primary text-white'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          My
+        </button>
+        <button
           onClick={() => switchTab('active')}
           className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
             tab === 'active'
@@ -77,7 +103,7 @@ export function Activities() {
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
-          Active
+          All
         </button>
         <button
           onClick={() => switchTab('archived')}
@@ -117,14 +143,16 @@ export function Activities() {
             <Search className="w-8 h-8 text-gray-400" />
           </div>
           <h3 className="font-medium text-gray-900 mb-1">
-            No {tab} activities
+            No {tab === 'my' ? 'my activities' : tab === 'active' ? 'active activities' : 'archived activities'}
           </h3>
           <p className="text-sm text-gray-500">
-            {tab === 'active'
+            {tab === 'my'
               ? 'Create a new activity to get started'
+              : tab === 'active'
+              ? 'No activities available'
               : 'Completed activities will appear here'}
           </p>
-          {tab === 'active' && (
+          {(tab === 'my' || tab === 'active') && (
             <Link
               to="/activities/new"
               className="btn btn-primary mt-4 inline-block"
