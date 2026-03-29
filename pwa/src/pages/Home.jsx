@@ -28,7 +28,7 @@ export function Home() {
 
       const newActivities = (result.data.activities || []).map(a => ({
         ...a,
-        id: a.activity_id
+        id: a.id || a.activity_id
       }));
 
       if (reset) {
