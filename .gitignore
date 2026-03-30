@@ -130,7 +130,7 @@ uploads/
 public/uploads/
 
 # PWA build output in backend
-backend/public/
+#backend/public/
 
 # IDE specific files
 *.iml
