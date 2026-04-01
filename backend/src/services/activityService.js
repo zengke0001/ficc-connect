@@ -269,66 +269,61 @@ class ActivityService {
 
   async getLeaderboard(activityId, type = 'overall', limit = 20) {
     let query_str;
-    // Ensure limit is an integer
-    const limitInt = parseInt(limit) || 20;
+    const limitInt = parseInt(limit) || 0;
 
     if (type === 'daily') {
       query_str = `
         SELECT 
-          u.id, u.nickname, u.avatar_url, t.name as team_name, t.color as team_color,
-          COUNT(c.id) as checkin_count,
-          COALESCE(SUM(c.points_earned), 0) as points,
+          u.id as user_id, u.nickname, u.avatar_url, t.name as team_name, t.color as team_color,
+          COUNT(c.id) as total_checkins,
+          COALESCE(SUM(c.points_earned), 0) as total_points,
           ROW_NUMBER() OVER (ORDER BY COUNT(c.id) DESC, COALESCE(SUM(c.points_earned), 0) DESC) as rank
-        FROM activity_participants ap
-        JOIN users u ON ap.user_id = u.id
+        FROM checkins c
+        JOIN users u ON c.user_id = u.id
         LEFT JOIN teams t ON u.team_id = t.id
-        LEFT JOIN checkins c ON c.user_id = u.id AND c.activity_id = ap.activity_id AND c.checkin_date = date('now')
-        WHERE ap.activity_id = ?
+        WHERE c.activity_id = ? AND c.checkin_date = date('now')
         GROUP BY u.id, u.nickname, u.avatar_url, t.name, t.color
-        ORDER BY points DESC, checkin_count DESC
-        LIMIT ?
+        ORDER BY total_points DESC, total_checkins DESC
+        ${limitInt > 0 ? 'LIMIT ?' : ''}
       `;
-      const params = [activityId, limitInt];
+      const params = limitInt > 0 ? [activityId, limitInt] : [activityId];
       const result = await query(query_str, params);
       return result.rows;
     } else if (type === 'weekly') {
       query_str = `
         SELECT 
-          u.id, u.nickname, u.avatar_url, t.name as team_name, t.color as team_color,
-          COUNT(c.id) as checkin_count,
-          COALESCE(SUM(c.points_earned), 0) as points,
+          u.id as user_id, u.nickname, u.avatar_url, t.name as team_name, t.color as team_color,
+          COUNT(c.id) as total_checkins,
+          COALESCE(SUM(c.points_earned), 0) as total_points,
           ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_earned), 0) DESC) as rank
-        FROM activity_participants ap
-        JOIN users u ON ap.user_id = u.id
+        FROM checkins c
+        JOIN users u ON c.user_id = u.id
         LEFT JOIN teams t ON u.team_id = t.id
-        LEFT JOIN checkins c ON c.user_id = u.id AND c.activity_id = ap.activity_id 
-          AND c.checkin_date >= date('now', 'weekday 0')
-        WHERE ap.activity_id = ?
+        WHERE c.activity_id = ? AND c.checkin_date >= date('now', 'weekday 0')
         GROUP BY u.id, u.nickname, u.avatar_url, t.name, t.color
-        ORDER BY points DESC
-        LIMIT ?
+        ORDER BY total_points DESC
+        ${limitInt > 0 ? 'LIMIT ?' : ''}
       `;
-      const params = [activityId, limitInt];
+      const params = limitInt > 0 ? [activityId, limitInt] : [activityId];
       const result = await query(query_str, params);
       return result.rows;
     } else {
-      // Overall
       query_str = `
         SELECT 
-          u.id, u.nickname, u.avatar_url, t.name as team_name, t.color as team_color,
-          ap.total_checkins as checkin_count,
-          ap.total_points as points,
-          ap.current_streak,
-          ap.max_streak,
-          ROW_NUMBER() OVER (ORDER BY ap.total_points DESC) as rank
-        FROM activity_participants ap
-        JOIN users u ON ap.user_id = u.id
+          u.id as user_id, u.nickname, u.avatar_url, t.name as team_name, t.color as team_color,
+          COUNT(c.id) as total_checkins,
+          COALESCE(SUM(c.points_earned), 0) as total_points,
+          MAX(c.points_earned) as max_single_checkin,
+          ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_earned), 0) DESC) as rank
+        FROM checkins c
+        JOIN users u ON c.user_id = u.id
         LEFT JOIN teams t ON u.team_id = t.id
-        WHERE ap.activity_id = ?
-        ORDER BY ap.total_points DESC
-        LIMIT ?
+        WHERE c.activity_id = ?
+        GROUP BY u.id, u.nickname, u.avatar_url, t.name, t.color
+        ORDER BY total_points DESC
+        ${limitInt > 0 ? 'LIMIT ?' : ''}
       `;
-      const params = [activityId, limitInt];
+      const params = limitInt > 0 ? [activityId, limitInt] : [activityId];
       const result = await query(query_str, params);
       return result.rows;
     }

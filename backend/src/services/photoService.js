@@ -250,34 +250,32 @@ class PhotoService {
       ORDER BY p.likes_count DESC, p.created_at DESC
     `, [userId || 0, activityId]);
 
-    // Get leaderboard (winners)
+    // Get leaderboard (winners) - based on checkins
     const winnersResult = await query(`
       SELECT 
         u.id, u.nickname, u.avatar_url,
         t.name as team_name, t.color as team_color,
-        ap.total_checkins, ap.total_points, ap.max_streak,
-        ROW_NUMBER() OVER (ORDER BY ap.total_points DESC) as rank
-      FROM activity_participants ap
-      JOIN users u ON ap.user_id = u.id
+        COUNT(c.id) as total_checkins,
+        COALESCE(SUM(c.points_earned), 0) as total_points,
+        MAX(c.points_earned) as max_streak,
+        ROW_NUMBER() OVER (ORDER BY COALESCE(SUM(c.points_earned), 0) DESC) as rank
+      FROM checkins c
+      JOIN users u ON c.user_id = u.id
       LEFT JOIN teams t ON u.team_id = t.id
-      WHERE ap.activity_id = ?
-      ORDER BY ap.total_points DESC
+      WHERE c.activity_id = ?
+      GROUP BY u.id, u.nickname, u.avatar_url, t.name, t.color
+      ORDER BY total_points DESC
       LIMIT 3
     `, [activityId]);
 
     // Activity stats
     const statsResult = await query(`
       SELECT
-        COUNT(DISTINCT ap.user_id) as total_participants,
-        COUNT(c.id) as total_checkins,
-        COUNT(p.id) as total_photos,
-        COALESCE(SUM(l.count), 0) as total_likes
-      FROM activity_participants ap
-      LEFT JOIN checkins c ON c.activity_id = ?
-      LEFT JOIN photos p ON p.activity_id = ?
-      LEFT JOIN (SELECT photo_id, COUNT(*) as count FROM likes GROUP BY photo_id) l ON l.photo_id = p.id
-      WHERE ap.activity_id = ?
-    `, [activityId, activityId, activityId]);
+        (SELECT COUNT(DISTINCT user_id) FROM checkins WHERE activity_id = ?) as total_participants,
+        (SELECT COUNT(*) FROM checkins WHERE activity_id = ?) as total_checkins,
+        (SELECT COUNT(*) FROM photos WHERE activity_id = ?) as total_photos,
+        (SELECT COUNT(*) FROM likes WHERE photo_id IN (SELECT id FROM photos WHERE activity_id = ?)) as total_likes
+    `, [activityId, activityId, activityId, activityId]);
 
     return {
       photos: photosResult.rows.map(row => ({ ...row, is_liked: row.is_liked === 1 })),
