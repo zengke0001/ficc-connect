@@ -25,6 +25,7 @@ export function ActivityDetail() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [participantsModalOpen, setParticipantsModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', description: '', cover_image_url: '', allow_multiple_checkins: false });
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
@@ -405,9 +406,12 @@ export function ActivityDetail() {
               </div>
             ))}
             {participants.length > 10 && (
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm text-gray-600">
+              <button
+                onClick={() => setParticipantsModalOpen(true)}
+                className="w-10 h-10 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-sm text-primary font-medium"
+              >
                 +{participants.length - 10}
-              </div>
+              </button>
             )}
           </div>
         </div>
@@ -572,6 +576,65 @@ export function ActivityDetail() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* All Participants Modal */}
+      {participantsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setParticipantsModalOpen(false)}>
+          <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="font-semibold text-gray-900">All Participants ({participants.length})</h2>
+              <button
+                onClick={() => setParticipantsModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh] p-4">
+              <div className="space-y-3">
+                {participants.map((p, index) => (
+                  <div key={p.user_id} className="flex items-center gap-3">
+                    <span className="text-gray-400 text-sm w-6">{index + 1}</span>
+                    <div
+                      className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0"
+                    >
+                      {p.avatar_url ? (
+                        <img
+                          src={p.avatar_url}
+                          alt={p.nickname}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className={`w-full h-full ${getAvatarColor(p.nickname)} text-white flex items-center justify-center text-xs font-medium`}>
+                          {getInitials(p.nickname)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{p.nickname}</p>
+                      {p.team_name && (
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: p.team_color || '#888' }}
+                          />
+                          {p.team_name}
+                        </p>
+                      )}
+                    </div>
+                    {p.total_checkins !== undefined && (
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-primary">{p.total_checkins}</p>
+                        <p className="text-xs text-gray-500">check-ins</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

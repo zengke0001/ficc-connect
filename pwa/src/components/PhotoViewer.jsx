@@ -1,36 +1,25 @@
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { X, Heart, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { formatRelativeTime } from '../utils/helpers';
 import { photoAPI } from '../utils/api';
 
-export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpdate }) {
+export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpdate, onNavigate }) {
   const [liking, setLiking] = useState(false);
-  const [currentPhoto, setCurrentPhoto] = useState(null);
-  const [transitioning, setTransitioning] = useState(false);
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
+  const touchRef = useRef({ startX: 0, startY: 0, diffX: 0, diffY: 0 });
 
-  useEffect(() => {
-    if (isOpen && photos[currentIndex]) {
-      setCurrentPhoto(photos[currentIndex]);
-    }
-  }, [isOpen, photos, currentIndex]);
+  const currentPhoto = photos[currentIndex];
 
-  const goToPrev = useCallback(() => {
-    if (currentIndex > 0 && !transitioning) {
-      setTransitioning(true);
-      setCurrentPhoto(photos[currentIndex - 1]);
-      setTimeout(() => setTransitioning(false), 300);
+  const goToPrev = () => {
+    if (currentIndex > 0) {
+      onNavigate?.(photos[currentIndex - 1].id);
     }
-  }, [currentIndex, photos, transitioning]);
+  };
 
-  const goToNext = useCallback(() => {
-    if (currentIndex < photos.length - 1 && !transitioning) {
-      setTransitioning(true);
-      setCurrentPhoto(photos[currentIndex + 1]);
-      setTimeout(() => setTransitioning(false), 300);
+  const goToNext = () => {
+    if (currentIndex < photos.length - 1) {
+      onNavigate?.(photos[currentIndex + 1].id);
     }
-  }, [currentIndex, photos, transitioning]);
+  };
 
   const handleLike = async (e) => {
     e?.stopPropagation();
@@ -43,14 +32,6 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
       } else {
         await photoAPI.like(currentPhoto.id);
       }
-      const updatedPhoto = {
-        ...currentPhoto,
-        is_liked: !currentPhoto.is_liked,
-        likes_count: currentPhoto.is_liked
-          ? currentPhoto.likes_count - 1
-          : currentPhoto.likes_count + 1
-      };
-      setCurrentPhoto(updatedPhoto);
       onPhotoUpdate?.(currentPhoto.id, !currentPhoto.is_liked);
     } catch (error) {
       console.error('Failed to like photo:', error);
@@ -60,23 +41,32 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
   };
 
   const handleTouchStart = (e) => {
-    touchStartX.current = e.touches[0].clientX;
+    touchRef.current.startX = e.touches[0].clientX;
+    touchRef.current.startY = e.touches[0].clientY;
+    touchRef.current.diffX = 0;
+    touchRef.current.diffY = 0;
   };
 
   const handleTouchMove = (e) => {
-    touchEndX.current = e.touches[0].clientX;
+    touchRef.current.diffX = e.touches[0].clientX - touchRef.current.startX;
+    touchRef.current.diffY = e.touches[0].clientY - touchRef.current.startY;
   };
 
-  const handleTouchEnd = () => {
-    const diff = touchStartX.current - touchEndX.current;
+  const handleTouchEnd = (e) => {
+    const { diffX, diffY } = touchRef.current;
     const threshold = 50;
-    if (Math.abs(diff) > threshold) {
-      if (diff > 0) {
-        goToNext();
-      } else {
+    const isHorizontalSwipe = Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold;
+    
+    if (isHorizontalSwipe) {
+      e.preventDefault();
+      if (diffX > 0) {
         goToPrev();
+      } else {
+        goToNext();
       }
     }
+    touchRef.current.diffX = 0;
+    touchRef.current.diffY = 0;
   };
 
   useEffect(() => {
@@ -103,7 +93,7 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose, goToPrev, goToNext]);
+  }, [isOpen, onClose, currentIndex, photos]);
 
   if (!isOpen || !currentPhoto) return null;
 
@@ -147,7 +137,7 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
 
         <div className="flex items-center gap-3">
           <button
-            onClick={handleLike}
+            onClick={(e) => { e.stopPropagation(); handleLike(e); }}
             disabled={liking}
             className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
               currentPhoto.is_liked
@@ -181,14 +171,15 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
           </button>
         )}
 
-        <img
-          src={currentPhoto.url}
-          alt="Full size"
-          className={`max-w-full max-h-full object-contain transition-transform duration-300 ${
-            transitioning ? 'scale-95 opacity-50' : 'scale-100 opacity-100'
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        />
+        <div className="w-full h-full flex items-center justify-center">
+          <img
+            src={currentPhoto.url}
+            alt="Full size"
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+            draggable={false}
+          />
+        </div>
 
         {hasNext && (
           <button

@@ -42,6 +42,13 @@ export function ActivityGallery() {
     );
   };
 
+  const handleNavigate = (photoId) => {
+    const index = photos.findIndex(p => p.id === photoId);
+    if (index !== -1) {
+      setViewerIndex(index);
+    }
+  };
+
   const openViewer = (photoId) => {
     const index = photos.findIndex(p => p.id === photoId);
     if (index !== -1) {
@@ -122,6 +129,7 @@ export function ActivityGallery() {
         isOpen={viewerOpen}
         onClose={closeViewer}
         onPhotoUpdate={handlePhotoUpdate}
+        onNavigate={handleNavigate}
       />
     </div>
   );

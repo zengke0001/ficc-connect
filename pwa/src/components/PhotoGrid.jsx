@@ -44,6 +44,13 @@ export function PhotoGrid({ photos, onPhotoUpdate }) {
     onPhotoUpdate?.(photoId, isLiked);
   };
 
+  const handleViewerNavigate = (photoId) => {
+    const index = photos.findIndex(p => p.id === photoId);
+    if (index !== -1) {
+      setCurrentIndex(index);
+    }
+  };
+
   if (!photos || photos.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -128,6 +135,7 @@ export function PhotoGrid({ photos, onPhotoUpdate }) {
       isOpen={viewerOpen}
       onClose={closeViewer}
       onPhotoUpdate={handleViewerPhotoUpdate}
+      onNavigate={handleViewerNavigate}
     />
   </>
   );
