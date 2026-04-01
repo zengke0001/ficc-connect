@@ -1,12 +1,14 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { X, Heart, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { formatRelativeTime } from '../utils/helpers';
 import { photoAPI } from '../utils/api';
-import { useState } from 'react';
 
 export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpdate }) {
   const [liking, setLiking] = useState(false);
   const [currentPhoto, setCurrentPhoto] = useState(null);
+  const [transitioning, setTransitioning] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   useEffect(() => {
     if (isOpen && photos[currentIndex]) {
@@ -14,21 +16,21 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
     }
   }, [isOpen, photos, currentIndex]);
 
-  const handlePrev = useCallback((e) => {
-    e?.stopPropagation();
-    if (currentIndex > 0) {
+  const goToPrev = useCallback(() => {
+    if (currentIndex > 0 && !transitioning) {
+      setTransitioning(true);
       setCurrentPhoto(photos[currentIndex - 1]);
-      onPhotoUpdate?.(currentIndex - 1);
+      setTimeout(() => setTransitioning(false), 300);
     }
-  }, [currentIndex, photos, onPhotoUpdate]);
+  }, [currentIndex, photos, transitioning]);
 
-  const handleNext = useCallback((e) => {
-    e?.stopPropagation();
-    if (currentIndex < photos.length - 1) {
+  const goToNext = useCallback(() => {
+    if (currentIndex < photos.length - 1 && !transitioning) {
+      setTransitioning(true);
       setCurrentPhoto(photos[currentIndex + 1]);
-      onPhotoUpdate?.(currentIndex + 1);
+      setTimeout(() => setTransitioning(false), 300);
     }
-  }, [currentIndex, photos, onPhotoUpdate]);
+  }, [currentIndex, photos, transitioning]);
 
   const handleLike = async (e) => {
     e?.stopPropagation();
@@ -41,7 +43,6 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
       } else {
         await photoAPI.like(currentPhoto.id);
       }
-      // Update local state
       const updatedPhoto = {
         ...currentPhoto,
         is_liked: !currentPhoto.is_liked,
@@ -50,7 +51,6 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
           : currentPhoto.likes_count + 1
       };
       setCurrentPhoto(updatedPhoto);
-      // Notify parent
       onPhotoUpdate?.(currentPhoto.id, !currentPhoto.is_liked);
     } catch (error) {
       console.error('Failed to like photo:', error);
@@ -59,7 +59,26 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
     }
   };
 
-  // Keyboard navigation
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        goToNext();
+      } else {
+        goToPrev();
+      }
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -69,23 +88,22 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
           onClose();
           break;
         case 'ArrowLeft':
-          handlePrev();
+          goToPrev();
           break;
         case 'ArrowRight':
-          handleNext();
+          goToNext();
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    // Prevent body scroll when viewer is open
     document.body.style.overflow = 'hidden';
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose, handlePrev, handleNext]);
+  }, [isOpen, onClose, goToPrev, goToNext]);
 
   if (!isOpen || !currentPhoto) return null;
 
@@ -96,9 +114,11 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
     <div
       className="fixed inset-0 z-50 bg-black flex flex-col"
       onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent z-20">
         <div className="flex items-center gap-3">
           {currentPhoto.avatar_url ? (
             <img
@@ -126,7 +146,6 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Like button */}
           <button
             onClick={handleLike}
             disabled={liking}
@@ -143,7 +162,6 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
             <span>{currentPhoto.likes_count}</span>
           </button>
 
-          {/* Close button */}
           <button
             onClick={onClose}
             className="p-2 text-white hover:bg-white/20 rounded-full transition-colors"
@@ -153,30 +171,28 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
         </div>
       </div>
 
-      {/* Main Image */}
       <div className="flex-1 flex items-center justify-center relative">
-        {/* Previous button */}
         {hasPrev && (
           <button
-            onClick={handlePrev}
+            onClick={(e) => { e.stopPropagation(); goToPrev(); }}
             className="absolute left-4 p-3 text-white hover:bg-white/20 rounded-full transition-colors z-10"
           >
             <ChevronLeft size={32} />
           </button>
         )}
 
-        {/* Image */}
         <img
           src={currentPhoto.url}
           alt="Full size"
-          className="max-w-full max-h-full object-contain"
+          className={`max-w-full max-h-full object-contain transition-transform duration-300 ${
+            transitioning ? 'scale-95 opacity-50' : 'scale-100 opacity-100'
+          }`}
           onClick={(e) => e.stopPropagation()}
         />
 
-        {/* Next button */}
         {hasNext && (
           <button
-            onClick={handleNext}
+            onClick={(e) => { e.stopPropagation(); goToNext(); }}
             className="absolute right-4 p-3 text-white hover:bg-white/20 rounded-full transition-colors z-10"
           >
             <ChevronRight size={32} />
@@ -184,8 +200,7 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
         )}
       </div>
 
-      {/* Footer - Photo counter */}
-      <div className="p-4 bg-gradient-to-t from-black/80 to-transparent text-center">
+      <div className="p-4 bg-gradient-to-t from-black/80 to-transparent text-center z-20">
         <p className="text-white/80 text-sm">
           {currentIndex + 1} / {photos.length}
         </p>
