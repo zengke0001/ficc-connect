@@ -6,17 +6,29 @@ function parseDate(dateString) {
   if (dateString instanceof Date) return dateString;
 
   // Handle ISO date strings (e.g., "2025-03-21T00:00:00.000Z")
-  if (dateString.includes('T')) {
+  if (typeof dateString === 'string' && dateString.includes('T')) {
     const date = new Date(dateString);
     // Adjust for timezone to get the correct local date
     const timezoneOffset = date.getTimezoneOffset() * 60000;
-    return new Date(date.getTime() + timezoneOffset);
+    const adjustedDate = new Date(date.getTime() + timezoneOffset);
+    // Check if date is valid
+    if (isNaN(adjustedDate.getTime())) return null;
+    return adjustedDate;
   }
 
   // Handle date-only strings (e.g., "2025-03-21")
   // Parse as local date to avoid timezone shifts
-  const [year, month, day] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  if (typeof dateString === 'string') {
+    const parts = dateString.split(/[-.:]/);
+    if (parts.length >= 3) {
+      const [year, month, day] = parts.map(Number);
+      const date = new Date(year, month - 1, day);
+      if (isNaN(date.getTime())) return null;
+      return date;
+    }
+  }
+
+  return null;
 }
 
 // Format date range
@@ -69,7 +81,7 @@ export function getStreakFlame(streak) {
 // Format relative time
 export function formatRelativeTime(dateString) {
   const date = parseDate(dateString);
-  if (!date) return '';
+  if (!date || isNaN(date.getTime())) return '';
 
   const now = new Date();
   const diffMs = now - date;
@@ -87,6 +99,7 @@ export function formatRelativeTime(dateString) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return '';
   return `${y}.${m}.${d}`;
 }
 

@@ -73,10 +73,10 @@ export function PhotoGrid({ photos, onPhotoUpdate }) {
             {/* User Info */}
             <div className="absolute bottom-2 left-2 right-2">
               <div className="flex items-center gap-2">
-                {photo.user_avatar ? (
+                {photo.avatar_url ? (
                   <img
-                    src={photo.user_avatar}
-                    alt={photo.user_nickname}
+                    src={photo.avatar_url}
+                    alt={photo.nickname || 'User'}
                     className="w-6 h-6 rounded-full object-cover border border-white/50"
                   />
                 ) : (
@@ -85,11 +85,11 @@ export function PhotoGrid({ photos, onPhotoUpdate }) {
                   </div>
                 )}
                 <span className="text-white text-xs font-medium truncate">
-                  {photo.user_nickname}
+                  {photo.nickname || 'Anonymous'}
                 </span>
               </div>
               <p className="text-white/70 text-xs mt-1">
-                {formatRelativeTime(photo.created_at)}
+                {photo.created_at ? formatRelativeTime(photo.created_at) : ''}
               </p>
             </div>
 

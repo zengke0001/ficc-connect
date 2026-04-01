@@ -100,10 +100,10 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
         <div className="flex items-center gap-3">
-          {currentPhoto.user_avatar ? (
+          {currentPhoto.avatar_url ? (
             <img
-              src={currentPhoto.user_avatar}
-              alt={currentPhoto.user_nickname}
+              src={currentPhoto.avatar_url}
+              alt={currentPhoto.nickname || 'User'}
               className="w-10 h-10 rounded-full object-cover border-2 border-white/50"
             />
           ) : (
@@ -112,10 +112,16 @@ export function PhotoViewer({ photos, currentIndex, isOpen, onClose, onPhotoUpda
             </div>
           )}
           <div>
-            <p className="text-white font-medium">{currentPhoto.user_nickname}</p>
-            <p className="text-white/60 text-sm">
-              {formatRelativeTime(currentPhoto.created_at)}
-            </p>
+            <p className="text-white font-medium">{currentPhoto.nickname || 'Anonymous'}</p>
+            {currentPhoto.team_name && (
+              <p className="text-white/60 text-sm flex items-center gap-1">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: currentPhoto.team_color || '#888' }}
+                />
+                {currentPhoto.team_name}
+              </p>
+            )}
           </div>
         </div>
 
