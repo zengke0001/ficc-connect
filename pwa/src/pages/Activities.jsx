@@ -29,7 +29,7 @@ export function Activities() {
       };
 
       if (tab === 'my') {
-        params.created_by = 'me';
+        params.my_activities = 'true';
         params.status = 'active';
       } else if (tab === 'archived') {
         params.status = 'completed';
