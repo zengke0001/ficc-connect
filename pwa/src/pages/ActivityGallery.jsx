@@ -12,7 +12,6 @@ export function ActivityGallery() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState([]);
   const [stats, setStats] = useState(null);
-  const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState(0);
@@ -26,7 +25,6 @@ export function ActivityGallery() {
       const result = await photoAPI.getGallery(id);
       setPhotos(result.data.photos || []);
       setStats(result.data.stats || null);
-      setWinners(result.data.winners || []);
     } catch (error) {
       console.error('Failed to load gallery:', error);
     } finally {
@@ -36,14 +34,6 @@ export function ActivityGallery() {
 
   const handlePhotoUpdate = (photoId, isLiked) => {
     setPhotos(prev =>
-      prev.map(p =>
-        p.id === photoId
-          ? { ...p, is_liked: isLiked, likes_count: isLiked ? p.likes_count + 1 : p.likes_count - 1 }
-          : p
-      )
-    );
-    // Also update winners if the photo is there
-    setWinners(prev =>
       prev.map(p =>
         p.id === photoId
           ? { ...p, is_liked: isLiked, likes_count: isLiked ? p.likes_count + 1 : p.likes_count - 1 }
@@ -95,47 +85,13 @@ export function ActivityGallery() {
             </div>
             <div className="card p-3 text-center">
               <Trophy className="w-6 h-6 text-accent mx-auto mb-1" />
-              <p className="text-xl font-bold text-gray-900">{stats.participants}</p>
+              <p className="text-xl font-bold text-gray-900">{stats.total_participants}</p>
               <p className="text-xs text-gray-500">Participants</p>
             </div>
           </div>
         )}
 
-        {/* Winners */}
-        {winners.length > 0 && (
-          <div className="card p-4 mb-6">
-            <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-accent" />
-              Top Photos
-            </h2>
-            <div className="grid grid-cols-3 gap-3">
-              {winners.slice(0, 3).map((photo, index) => (
-                <div
-                  key={photo.id}
-                  className="relative aspect-square rounded-lg overflow-hidden cursor-pointer"
-                  onClick={() => openViewer(photo.id)}
-                >
-                  <img
-                    src={photo.url}
-                    alt="Winner"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute top-1 left-1">
-                    {index === 0 && <span className="text-2xl">🥇</span>}
-                    {index === 1 && <span className="text-2xl">🥈</span>}
-                    {index === 2 && <span className="text-2xl">🥉</span>}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                    <div className="flex items-center gap-1 text-white text-xs">
-                      <Heart className="w-3 h-3 fill-current" />
-                      <span>{photo.likes_count}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* All Photos */}
         <div>
